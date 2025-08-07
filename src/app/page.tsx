@@ -1,19 +1,25 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/Sidebar";
 import BackgroundWrapper from "@/components/ui/BackgroundWrapper";
 import HeroSection from "@/components/ui/HeroSection";
 import HeroHeading from "@/components/ui/HeroHeading";
 import HeroSubtitle from "@/components/ui/HeroSubtitle";
+import { ChatInput } from "@/components/ui/ChatInput";
+import WhatOthersAreBuildingSection from "@/components/ui/WhatOthersAreBuildingSection";
+import { AnimatedChevron } from "@/components/ui/AnimatedChevron";
 import {
   HomeIcon,
   DocumentDuplicateIcon,
   ClipboardDocumentIcon,
   ShoppingBagIcon,
   CogIcon,
+  CommandLineIcon,
 } from "@heroicons/react/24/outline";
 
 export default function Home() {
+  const router = useRouter();
   const navigationItems = [
     {
       id: "home",
@@ -35,6 +41,12 @@ export default function Home() {
       onClick: () => console.log("Templates clicked"),
     },
     {
+      id: "studio",
+      label: "Studio",
+      icon: <CommandLineIcon />,
+      onClick: () => console.log("Studio clicked"),
+    },
+    {
       id: "marketplace",
       label: "Marketplace",
       icon: <ShoppingBagIcon />,
@@ -49,20 +61,16 @@ export default function Home() {
   ];
 
   const recentItems = [
-    { id: "1", name: "Employee Onboarding Ag..." },
-    { id: "2", name: "Customer Support Agent" },
-    { id: "3", name: "Shubham's Agent" },
-    { id: "4", name: "Utkarsh's Agent" },
-    { id: "5", name: "PRD Review Agent" },
-    { id: "6", name: "Design Review Agent" },
+    { id: "1", name: "AI Assistant 1" },
+    { id: "2", name: "AI Assistant 2" },
+    { id: "3", name: "AI Assistant 3" },
   ];
-
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
       <Sidebar
-        userName="sneha Gupta"
-        workspaceName="My Workspace"
+        userName="Utkarsh Chandel"
+        workspaceName="CommunalAI"
         workspaces={[]}
         navigationItems={navigationItems}
         recentItems={recentItems}
@@ -72,19 +80,43 @@ export default function Home() {
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 relative">
-        <BackgroundWrapper className="h-full">
-          <HeroSection>
+      <div className="flex-1 relative overflow-y-auto">
+        <BackgroundWrapper className="max-h-screen mb-30">
+          {/* Hero Section */}
+          <HeroSection className="h-full">
             <HeroHeading size="lg">
-              Turn Your Expertise
+              Scale Your Expertise
               <br />
-              Into Scalable AI Clones
+              With AI Clones
             </HeroHeading>
 
             <HeroSubtitle size="md">
               Build. Train. Monetize. One Studio, Infinite Clones.
             </HeroSubtitle>
+
+            {/* Chat Input */}
+            <div className="mt-12">
+              <ChatInput
+                onSubmit={(message: string) => {
+                  console.log("User wants to scale:", message);
+                  router.push("/studio");
+                }}
+              />
+            </div>
           </HeroSection>
+        </BackgroundWrapper>
+        <AnimatedChevron
+          className="absolute left-1/2 bottom-8 transform -translate-x-1/2"
+          color="text-purple-700"
+          size="md"
+          count={1}
+          direction="down"
+        />
+
+        {/* What Others Are Building Section */}
+
+        <BackgroundWrapper className="min-h-screen" clouds={"typicalClouds"}>
+          <WhatOthersAreBuildingSection />
         </BackgroundWrapper>
       </div>
     </div>

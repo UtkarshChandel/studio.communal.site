@@ -21,7 +21,7 @@ export default function HeroHeading({
   return (
     <h1
       className={`
-      font-dm-sans font-bold text-gray-900 leading-tight mb-6
+      font-dm-sans font-bold text-gray-900 tracking-tight mb-6
       ${sizeClasses[size]}
       ${className}
     `}
