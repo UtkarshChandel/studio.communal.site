@@ -36,14 +36,14 @@ export default function HumanMessage({
   };
 
   return (
-    <div className={`flex items-center gap-2 justify-start ${className}`}>
+    <div className={`flex items-start gap-2 justify-start ${className}`}>
       {/* Avatar */}
       {renderAvatar()}
 
       {/* Message Bubble */}
-      <div className="flex-1 max-w-[441px]">
-        <div className="bg-[#e6ebff] p-[10px] rounded-xl flex items-center gap-2">
-          <p className="text-[15px] leading-[24px] text-[#141413] font-normal tracking-[-0.375px] whitespace-pre-wrap">
+      <div className="max-w-[80%]">
+        <div className="bg-[#e6ebff] p-[10px] rounded-xl inline-block">
+          <p className="text-[16px] leading-[24px] text-[#141413] font-normal tracking-[-0.01em] whitespace-pre-wrap font-inter">
             {message}
           </p>
         </div>

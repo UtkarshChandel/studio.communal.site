@@ -27,7 +27,7 @@ export default function NavigationList({
             <button
               onClick={item.onClick}
               className={`
-                w-full flex items-center space-x-3 px-4 py-2.5 text-left rounded-md transition-all
+                w-full flex items-center cursor-pointer space-x-3 px-4 py-2.5 text-left rounded-md transition-all
                 font-inter text-sm
                 ${
                   item.isActive

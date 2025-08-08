@@ -7,14 +7,7 @@ import StudioHeader from "@/components/ui/StudioHeader";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import ChatWindow, { Message } from "@/components/ui/ChatWindow";
-import {
-  HomeIcon,
-  DocumentDuplicateIcon,
-  ClipboardDocumentIcon,
-  ShoppingBagIcon,
-  CogIcon,
-  CommandLineIcon,
-} from "@heroicons/react/24/outline";
+import { useSidebarNavigation } from "@/hooks/useSidebarNavigation";
 
 export default function StudioPage() {
   const router = useRouter();
@@ -84,50 +77,7 @@ export default function StudioPage() {
     }, 1000);
   };
 
-  const navigationItems = [
-    {
-      id: "home",
-      label: "Home",
-      icon: <HomeIcon />,
-      isActive: false,
-      onClick: () => router.push("/"),
-    },
-    {
-      id: "clones",
-      label: "My Clones",
-      icon: <DocumentDuplicateIcon />,
-      isActive: false,
-      onClick: () => console.log("My Clones clicked"),
-    },
-    {
-      id: "templates",
-      label: "Templates",
-      icon: <ClipboardDocumentIcon />,
-      isActive: false,
-      onClick: () => console.log("Templates clicked"),
-    },
-    {
-      id: "studio",
-      label: "Studio",
-      icon: <CommandLineIcon />,
-      isActive: true,
-      onClick: () => console.log("Studio clicked"),
-    },
-    {
-      id: "marketplace",
-      label: "Marketplace",
-      icon: <ShoppingBagIcon />,
-      isActive: false,
-      onClick: () => console.log("Marketplace clicked"),
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <CogIcon />,
-      isActive: false,
-      onClick: () => console.log("Settings clicked"),
-    },
-  ];
+  const navigationItems = useSidebarNavigation();
 
   const recentItems = [
     { id: "1", name: "AI Assistant 1" },
@@ -156,7 +106,7 @@ export default function StudioPage() {
 
         {/* Content */}
         <div className="p-8">
-          <div className="max-w-4xl">
+          <div className="w-full">
             {/* Avatar with Action Buttons */}
             <div className="mb-8">
               <div className="flex items-center justify-between">
@@ -170,6 +120,33 @@ export default function StudioPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-4">
+                  <button
+                    onClick={() => router.push("/studio/settings")}
+                    aria-label="Settings"
+                    className="cursor-pointer bg-transparent border-none p-0 m-0"
+                    type="button"
+                  >
+                    <span className="sr-only">Settings</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="h-10 w-10 text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.527-.94 3.31.843 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.527-.843 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.527.94-3.31-.843-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.527.843-3.31 2.37-2.37.996.614 2.296.07 2.572-1.065z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </button>
                   <Button
                     variant="secondary"
                     onClick={() => console.log("Try clicked")}
@@ -187,11 +164,8 @@ export default function StudioPage() {
             </div>
 
             {/* Chat Window */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                AI Training Session
-              </h3>
-              <div className="h-[600px]">
+            <div className="mb-8 flex-1">
+              <div className="h-[calc(100vh-300px)] min-h-[600px]">
                 <ChatWindow
                   messages={chatMessages}
                   onSendMessage={handleSendMessage}

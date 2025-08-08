@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import AIMessage from "./AIMessage";
 import HumanMessage from "./HumanMessage";
-import { ChatInput } from "./ChatInput";
+import ChatInputTextArea from "./ChatInputTextArea";
 
 export interface Message {
   id: string;
@@ -67,10 +67,10 @@ export default function ChatWindow({
 
   return (
     <div
-      className={`flex flex-col h-full bg-white rounded-[5px] border border-gray-200 ${className}`}
+      className={`relative flex flex-col h-full bg-white rounded-[20px] shadow-xl border border-gray-200 ${className}`}
     >
-      {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      {/* Chat Messages Area - now takes full height and has bottom padding */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 pb-48">
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <p className="text-center">
@@ -111,9 +111,22 @@ export default function ChatWindow({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Chat Input Area */}
-      <div className="border-t border-gray-100 p-4">
-        <ChatInput onSubmit={handleSendMessage} />
+      {/* Chat Input Area - now positioned absolutely to overlay the messages */}
+      <div
+        className="absolute bottom-0 left-0 right-0 p-3 mt-5"
+        style={{
+          background: "rgba(255, 255, 255, 0.4)", // Medium transparency
+          backdropFilter: "blur(50px)",
+          WebkitBackdropFilter: "blur(50px)",
+          borderTop: "1px solid rgba(255, 255, 255, 0.3)",
+          borderRadius: "0 0 20px 20px",
+        }}
+      >
+        <ChatInputTextArea
+          onSubmit={handleSendMessage}
+          placeholder={placeholder}
+          loading={isLoading}
+        />
       </div>
     </div>
   );

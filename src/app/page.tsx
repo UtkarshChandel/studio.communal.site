@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/ui/Sidebar";
+import { useSidebarNavigation } from "@/hooks/useSidebarNavigation";
 import BackgroundWrapper from "@/components/ui/BackgroundWrapper";
 import HeroSection from "@/components/ui/HeroSection";
 import HeroHeading from "@/components/ui/HeroHeading";
@@ -20,45 +21,7 @@ import {
 
 export default function Home() {
   const router = useRouter();
-  const navigationItems = [
-    {
-      id: "home",
-      label: "Home",
-      icon: <HomeIcon />,
-      isActive: true,
-      onClick: () => console.log("Home clicked"),
-    },
-    {
-      id: "clones",
-      label: "My Clones",
-      icon: <DocumentDuplicateIcon />,
-      onClick: () => console.log("My Clones clicked"),
-    },
-    {
-      id: "templates",
-      label: "Templates",
-      icon: <ClipboardDocumentIcon />,
-      onClick: () => console.log("Templates clicked"),
-    },
-    {
-      id: "studio",
-      label: "Studio",
-      icon: <CommandLineIcon />,
-      onClick: () => console.log("Studio clicked"),
-    },
-    {
-      id: "marketplace",
-      label: "Marketplace",
-      icon: <ShoppingBagIcon />,
-      onClick: () => console.log("Marketplace clicked"),
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <CogIcon />,
-      onClick: () => console.log("Settings clicked"),
-    },
-  ];
+  const navigationItems = useSidebarNavigation();
 
   const recentItems = [
     { id: "1", name: "AI Assistant 1" },

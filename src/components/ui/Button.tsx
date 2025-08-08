@@ -37,9 +37,11 @@ export default function Button({
     "inline-flex",
     "items-center",
     "justify-center",
+    "font-inter",
     "font-semibold",
     "rounded-lg",
     "border",
+    "cursor-pointer",
     "transition-all",
     "duration-200",
     "focus:outline-none",
@@ -51,9 +53,9 @@ export default function Button({
   ];
 
   const sizeClasses = {
-    sm: "px-3 py-1.5 text-sm leading-5 gap-1.5",
-    md: "px-[18px] py-2.5 text-[16px] leading-6 gap-2",
-    lg: "px-6 py-3 text-lg leading-7 gap-2.5",
+    sm: "px-3 h-[33px] text-sm leading-[20px] gap-1.5",
+    md: "px-[18px] h-[41px] text-[16px] leading-[24px] gap-2",
+    lg: "px-6 h-[48px] text-lg leading-7 gap-2.5",
   };
 
   const variantClasses = {
@@ -72,9 +74,11 @@ export default function Button({
       "text-[#414651]",
       "border-[#4361ee]",
       "shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)]",
-      "hover:bg-gray-50",
+      // Keep background white on hover/active for pixel-perfect match
+      "hover:bg-white",
+      "hover:border-[#4361ee]",
       "focus:ring-[#4361ee]/20",
-      "active:bg-gray-100",
+      "active:bg-white",
     ],
     outline: [
       "bg-transparent",
@@ -93,14 +97,15 @@ export default function Button({
       "active:bg-gray-200",
     ],
     danger: [
-      "bg-red-600",
-      "text-white",
-      "border-red-600",
+      "bg-[#fee4e2]",
+      "text-[#d92d20]",
+      "border-[#d92d20]",
       "shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)]",
-      "hover:bg-red-700",
-      "hover:border-red-700",
-      "focus:ring-red-600/20",
-      "active:bg-red-800",
+      // Keep static visual per Figma
+      "hover:bg-[#fee4e2]",
+      "hover:border-[#d92d20]",
+      "focus:ring-[#d92d20]/20",
+      "active:bg-[#fee4e2]",
     ],
     gradient: [
       "bg-gradient-to-r",
