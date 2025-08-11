@@ -1,5 +1,5 @@
-import { ReactNode, useState } from "react";
-import GradientCloud from "./GradientCloud";
+import { ReactNode, useMemo, useState } from "react";
+import GradientCloud, { type GradientCloudProps } from "./GradientCloud";
 
 interface CloudConfig {
   scale: number;
@@ -15,6 +15,7 @@ interface BackgroundWrapperProps {
   clouds?: CloudConfig[] | "default" | "typicalClouds";
   className?: string;
   devMode?: boolean;
+  animationPreset?: AnimationPresetName | "none";
 }
 
 const defaultClouds: CloudConfig[] = [
@@ -46,11 +47,61 @@ const typicalClouds: CloudConfig[] = [
   },
 ];
 
+type AnimatableConfig = Partial<
+  Pick<CloudConfig, "scale" | "top" | "left" | "rotation" | "opacity" | "blur">
+> & { colors?: GradientCloudProps["colors"] };
+
+type CloudAnimation = {
+  from?: AnimatableConfig;
+  to?: AnimatableConfig;
+  duration?: number;
+  delay?: number;
+};
+
+type AnimationPreset = { clouds: CloudAnimation[] };
+type AnimationPresetName = "drift" | "floatIn" | "crossFade";
+
+const animationPresets: Record<AnimationPresetName, AnimationPreset> = {
+  drift: {
+    clouds: [
+      { to: { left: 10, top: 40, rotation: 56 }, duration: 2000 },
+      {
+        to: { left: 78, top: 46, rotation: 40, opacity: 0.25 },
+        duration: 2000,
+        delay: 150,
+      },
+    ],
+  },
+  floatIn: {
+    clouds: [
+      { from: { opacity: 0 }, to: { opacity: 0.4, top: 36 }, duration: 1200 },
+      {
+        from: { opacity: 0 },
+        to: { opacity: 0.35, left: 82 },
+        duration: 1200,
+        delay: 100,
+      },
+    ],
+  },
+  crossFade: {
+    clouds: [
+      { to: { opacity: 0.6 }, duration: 1200 },
+      {
+        from: { opacity: 0 },
+        to: { opacity: 0.25 },
+        duration: 1200,
+        delay: 200,
+      },
+    ],
+  },
+};
+
 export default function BackgroundWrapper({
   children,
   clouds = "default",
   className = "",
   devMode = false,
+  animationPreset = "none",
 }: BackgroundWrapperProps) {
   // Resolve initial cloud configuration
   const getInitialConfig = (): CloudConfig[] => {
@@ -86,20 +137,50 @@ export default function BackgroundWrapper({
     });
   };
 
+  const getAnimationForIndex = useMemo(() => {
+    if (!animationPreset || animationPreset === "none") return null;
+    const preset = animationPresets[animationPreset as AnimationPresetName];
+    if (!preset) return null;
+    return (index: number): CloudAnimation | null => {
+      if (preset.clouds.length === 0) return null;
+      return preset.clouds[Math.min(index, preset.clouds.length - 1)] ?? null;
+    };
+  }, [animationPreset]);
+
   return (
     <div className={`relative overflow-hidden bg-white ${className}`}>
       {/* Gradient Clouds */}
-      {cloudConfig.map((cloud, index) => (
-        <GradientCloud
-          key={index}
-          scale={cloud.scale}
-          top={cloud.top}
-          left={cloud.left}
-          rotation={cloud.rotation}
-          opacity={cloud.opacity}
-          blur={cloud.blur as "3xl" | "2xl" | "sm" | "md" | "lg" | "xl"}
-        />
-      ))}
+      {cloudConfig.map((cloud, index) => {
+        const anim = getAnimationForIndex ? getAnimationForIndex(index) : null;
+
+        if (!anim || devMode) {
+          return (
+            <GradientCloud
+              key={index}
+              scale={cloud.scale}
+              top={cloud.top}
+              left={cloud.left}
+              rotation={cloud.rotation}
+              opacity={cloud.opacity}
+              blur={cloud.blur as "3xl" | "2xl" | "sm" | "md" | "lg" | "xl"}
+            />
+          );
+        }
+
+        const from = { ...cloud, ...(anim.from ?? {}) } as any;
+        const to = { ...cloud, ...(anim.to ?? {}) } as any;
+
+        return (
+          <GradientCloud
+            key={index}
+            animating
+            fromGradientCloudConfig={from}
+            toGradientCloudConfig={to}
+            duration={anim.duration}
+            delay={anim.delay}
+          />
+        );
+      })}
 
       {/* Content */}
       {children}

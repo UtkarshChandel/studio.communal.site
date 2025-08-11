@@ -1,11 +1,58 @@
 import React, { useState } from "react";
 
-const copyIcon =
-  "http://localhost:3845/assets/6840e2d9af27456a3a0a5563409156d2e4a122d3.svg";
-const likeIcon =
-  "http://localhost:3845/assets/2162967405db7d11abb82092c39ec6fcac15cda6.svg";
-const dislikeIcon =
-  "http://localhost:3845/assets/bf7057eec01d1255f014259cda2e128ada22625f.svg";
+const LikeIcon = ({
+  className = "",
+  width = 20,
+  height = 20,
+}: {
+  className?: string;
+  width?: number;
+  height?: number;
+}) => (
+  <img
+    src="/icons/like.svg"
+    alt="Like"
+    width={width}
+    height={height}
+    className={className}
+  />
+);
+
+const DislikeIcon = ({
+  className = "",
+  width = 20,
+  height = 20,
+}: {
+  className?: string;
+  width?: number;
+  height?: number;
+}) => (
+  <img
+    src="/icons/dislike.svg"
+    alt="Dislike"
+    width={width}
+    height={height}
+    className={className}
+  />
+);
+
+const CopyIcon = ({
+  className = "",
+  width = 20,
+  height = 20,
+}: {
+  className?: string;
+  width?: number;
+  height?: number;
+}) => (
+  <img
+    src="/icons/copy.svg"
+    alt="Copy"
+    width={width}
+    height={height}
+    className={className}
+  />
+);
 
 interface AIMessageProps {
   message: string;
@@ -79,7 +126,7 @@ export default function AIMessage({
               }`}
               aria-label="Like message"
             >
-              <img src={likeIcon} alt="Like" className="h-5 w-5" />
+              <LikeIcon className="h-5 w-5" />
             </button>
 
             {/* Dislike Button */}
@@ -91,7 +138,7 @@ export default function AIMessage({
               }`}
               aria-label="Dislike message"
             >
-              <img src={dislikeIcon} alt="Dislike" className="h-5 w-5" />
+              <DislikeIcon className="h-5 w-5" />
             </button>
 
             {/* Copy Button */}
@@ -103,7 +150,7 @@ export default function AIMessage({
               }`}
               aria-label={copied ? "Copied!" : "Copy message"}
             >
-              <img src={copyIcon} alt="Copy" className="h-5 w-5" />
+              <CopyIcon className="h-5 w-5" />
             </button>
 
             {/* Copy Feedback */}

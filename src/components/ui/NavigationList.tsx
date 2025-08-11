@@ -23,7 +23,7 @@ export default function NavigationList({
     <div className={`py-4 ${className}`}>
       <nav className="space-y-1">
         {items.map((item) => (
-          <div key={item.id} className={item.isActive ? "mx-4" : "mx-2"}>
+          <div key={item.id} className={item.isActive ? "mx-2" : "mx-2"}>
             <button
               onClick={item.onClick}
               className={`

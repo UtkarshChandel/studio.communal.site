@@ -41,7 +41,7 @@ export default function AIAssistantCard({
   };
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative h-full ${className}`}>
       {/* Floating Icons */}
       {floatingIcons.map((iconData, index) => (
         <div
@@ -56,7 +56,7 @@ export default function AIAssistantCard({
       ))}
 
       {/* Main Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-300 h-full flex flex-col">
         {/* Image Thumbnail */}
         {image && (
           <div className="w-full aspect-[4/3] sm:aspect-[16/10] bg-gradient-to-br from-gray-50 to-gray-100 relative overflow-hidden rounded-t-lg">
@@ -72,9 +72,12 @@ export default function AIAssistantCard({
         )}
 
         {/* Card Content */}
-        <div className={`p-8 ${image ? "pt-6" : "pt-12"}`}>
+        <div className={`p-8 ${image ? "pt-6" : "pt-12"} flex-1 flex flex-col`}>
           <h3 className="font-dm-sans font-bold text-xl text-gray-900 mb-3">
-            {role}, {name}
+            {role},{" "}
+            <span className="bg-gradient-to-r from-[#3A0CA3] via-[#1a9ba5] to-[#3A0CA3] bg-clip-text text-transparent">
+              {name}
+            </span>
           </h3>
 
           <p className="font-geist text-gray-600 leading-relaxed">

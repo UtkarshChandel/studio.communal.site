@@ -1,8 +1,7 @@
 import React from "react";
 
-// Figma-exported copy vector asset
-const copyIconAsset =
-  "http://localhost:3845/assets/210181dfda084d63f316e2cf1c9b9f0614e8043a.svg";
+// Use the local public asset instead of the temporary localhost MCP URL
+const copyIconAsset = "/icons/copy.svg";
 
 interface CopyIconProps {
   size?: number;
@@ -11,7 +10,7 @@ interface CopyIconProps {
 }
 
 export default function CopyIcon({
-  size = 16,
+  size = 20,
   className = "",
   alt = "copy",
 }: CopyIconProps) {

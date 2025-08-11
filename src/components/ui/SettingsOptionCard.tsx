@@ -6,6 +6,9 @@ interface SettingsOptionCardProps {
   icon?: React.ReactNode;
   title: string;
   description?: string;
+  // Optional background behind the icon container.
+  // Pass "none" to remove the default tinted background.
+  iconBg?: string;
   // Optional link display row as per Figma
   linkUrl?: string;
   onCopyLink?: () => void;
@@ -32,6 +35,7 @@ export default function SettingsOptionCard({
   icon,
   title,
   description,
+  iconBg,
   linkUrl,
   onCopyLink,
   extraAction,
@@ -45,7 +49,15 @@ export default function SettingsOptionCard({
     >
       <div className="flex items-start gap-4 min-h-[72px]">
         {icon && (
-          <div className="w-[33px] h-[33px] rounded-[5px] bg-[rgba(67,97,238,0.19)] flex items-center justify-center shrink-0">
+          <div
+            className={`w-[33px] h-[33px] rounded-[5px] flex items-center justify-center shrink-0 ${
+              iconBg === "none"
+                ? ""
+                : iconBg
+                ? iconBg
+                : "bg-[rgba(67,97,238,0.19)]"
+            }`}
+          >
             {icon}
           </div>
         )}
@@ -71,7 +83,10 @@ export default function SettingsOptionCard({
                   onClick={onCopyLink}
                   className="p-2 rounded-md hover:bg-black/5"
                 >
-                  <CopyIcon className="w-[12px] h-[16.5px]" size={16} />
+                  <CopyIcon
+                    className="w-[20px] h-[20px] cursor-pointer"
+                    size={16}
+                  />
                 </button>
               </div>
               {extraAction && (
