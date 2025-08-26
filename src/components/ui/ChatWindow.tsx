@@ -74,7 +74,7 @@ export default function ChatWindow({
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500">
             <p className="text-center">
-              Hey there, Let's get started.
+              Hey there, Let&#39;s get started.
               <br />
               What expertise would you like to model in your AI self today?
             </p>

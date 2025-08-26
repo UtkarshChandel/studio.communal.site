@@ -1,5 +1,8 @@
 import { ReactNode, useMemo, useState } from "react";
-import GradientCloud, { type GradientCloudProps } from "./GradientCloud";
+import GradientCloud, {
+  type GradientCloudProps,
+  type GradientCloudAnimatedProps,
+} from "./GradientCloud";
 
 interface CloudConfig {
   scale: number;
@@ -7,7 +10,7 @@ interface CloudConfig {
   left: number;
   rotation: number;
   opacity: number;
-  blur: string;
+  blur: GradientCloudProps["blur"];
 }
 
 interface BackgroundWrapperProps {
@@ -47,13 +50,13 @@ const typicalClouds: CloudConfig[] = [
   },
 ];
 
-type AnimatableConfig = Partial<
+type AnimatableConfigLocal = Partial<
   Pick<CloudConfig, "scale" | "top" | "left" | "rotation" | "opacity" | "blur">
 > & { colors?: GradientCloudProps["colors"] };
 
 type CloudAnimation = {
-  from?: AnimatableConfig;
-  to?: AnimatableConfig;
+  from?: AnimatableConfigLocal;
+  to?: AnimatableConfigLocal;
   duration?: number;
   delay?: number;
 };
@@ -125,7 +128,7 @@ export default function BackgroundWrapper({
   const updateCloudProperty = (
     index: number,
     property: keyof CloudConfig,
-    value: number | string
+    value: number | CloudConfig["blur"]
   ) => {
     console.log(`Updating cloud ${index}, ${property} to:`, value);
     setCloudConfig((prev) => {
@@ -162,13 +165,28 @@ export default function BackgroundWrapper({
               left={cloud.left}
               rotation={cloud.rotation}
               opacity={cloud.opacity}
-              blur={cloud.blur as "3xl" | "2xl" | "sm" | "md" | "lg" | "xl"}
+              blur={cloud.blur}
             />
           );
         }
 
-        const from = { ...cloud, ...(anim.from ?? {}) } as any;
-        const to = { ...cloud, ...(anim.to ?? {}) } as any;
+        const baseConfig: GradientCloudAnimatedProps["fromGradientCloudConfig"] =
+          {
+            scale: cloud.scale,
+            top: cloud.top,
+            left: cloud.left,
+            rotation: cloud.rotation,
+            opacity: cloud.opacity,
+            blur: cloud.blur,
+          };
+        const from: GradientCloudAnimatedProps["fromGradientCloudConfig"] = {
+          ...baseConfig,
+          ...(anim.from ?? {}),
+        };
+        const to: GradientCloudAnimatedProps["fromGradientCloudConfig"] = {
+          ...baseConfig,
+          ...(anim.to ?? {}),
+        };
 
         return (
           <GradientCloud
@@ -335,7 +353,7 @@ export default function BackgroundWrapper({
                     updateCloudProperty(
                       selectedCloudIndex,
                       "blur",
-                      e.target.value
+                      e.target.value as CloudConfig["blur"]
                     )
                   }
                   className="w-full text-xs border border-gray-300 rounded px-2 py-1"

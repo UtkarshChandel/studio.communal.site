@@ -115,11 +115,11 @@ const GradientCloud: React.FC<GradientCloudComponentProps> = (props) => {
   };
 
   // Determine operating mode and current configuration
-  const isAnimating = (props as any).animating === true;
+  const isAnimating = "animating" in props && props.animating === true;
 
   // Container-level props common to both modes
-  const className = (props as any).className ?? "";
-  const absolute = (props as any).absolute ?? true;
+  const className = props.className ?? "";
+  const absolute = props.absolute ?? true;
 
   // Animated mode: maintain a current config that will be transitioned via CSS
   const [current, setCurrent] = useState(() => {
@@ -141,7 +141,8 @@ const GradientCloud: React.FC<GradientCloudComponentProps> = (props) => {
     });
   });
 
-  const target = useMemo(() => {
+  // Compute the target configuration when animating (not stored separately)
+  useMemo(() => {
     if (!isAnimating) return current;
     return resolveConfig(
       (props as GradientCloudAnimatedProps).toGradientCloudConfig
