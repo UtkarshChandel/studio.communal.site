@@ -1,3 +1,4 @@
+//src/store/useAppStore.ts
 import { create } from 'zustand'
 
 // Define your store's state interface
@@ -8,11 +9,11 @@ interface AppState {
     name: string
     email: string
   } | null
-  
+
   // UI state
   theme: 'light' | 'dark'
   isLoading: boolean
-  
+
   // Actions
   setUser: (user: AppState['user']) => void
   clearUser: () => void
@@ -26,12 +27,12 @@ export const useAppStore = create<AppState>((set) => ({
   user: null,
   theme: 'light',
   isLoading: false,
-  
+
   // Actions
   setUser: (user) => set({ user }),
   clearUser: () => set({ user: null }),
-  toggleTheme: () => set((state) => ({ 
-    theme: state.theme === 'light' ? 'dark' : 'light' 
+  toggleTheme: () => set((state) => ({
+    theme: state.theme === 'light' ? 'dark' : 'light'
   })),
   setLoading: (isLoading) => set({ isLoading }),
 }))

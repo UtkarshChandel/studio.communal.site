@@ -15,6 +15,8 @@ interface GradientCloudProps {
   opacity?: number;
   /** Additional CSS classes */
   className?: string;
+  /** Inline style for container */
+  style?: React.CSSProperties;
   /** Whether to use absolute positioning */
   absolute?: boolean;
   /** Custom colors override */
@@ -50,6 +52,8 @@ type GradientCloudAnimatedProps = {
   className?: string;
   /** Whether to use absolute positioning for container */
   absolute?: boolean;
+  /** Inline style for container */
+  style?: React.CSSProperties;
 };
 
 type GradientCloudComponentProps =
@@ -57,7 +61,10 @@ type GradientCloudComponentProps =
   | GradientCloudAnimatedProps;
 
 const DEFAULTS: Required<
-  Omit<GradientCloudProps, "className" | "absolute" | "colors" | "blur">
+  Omit<
+    GradientCloudProps,
+    "className" | "absolute" | "colors" | "blur" | "style"
+  >
 > & {
   colors: NonNullable<GradientCloudProps["colors"]>;
   blur: NonNullable<GradientCloudProps["blur"]>;
@@ -120,6 +127,7 @@ const GradientCloud: React.FC<GradientCloudComponentProps> = (props) => {
   // Container-level props common to both modes
   const className = props.className ?? "";
   const absolute = props.absolute ?? true;
+  const externalStyle = (props as { style?: React.CSSProperties }).style;
 
   // Animated mode: maintain a current config that will be transitioned via CSS
   const [current, setCurrent] = useState(() => {
@@ -213,6 +221,7 @@ const GradientCloud: React.FC<GradientCloudComponentProps> = (props) => {
         transition: isAnimating
           ? `transform linear ${durationMs}ms, top linear ${durationMs}ms, left linear ${durationMs}ms`
           : undefined,
+        ...(externalStyle || {}),
       }}
     >
       <svg

@@ -1,12 +1,14 @@
+//src/app/clones/page.tsx
 "use client";
 
 import React from "react";
-import Sidebar from "@/components/ui/Sidebar";
+import AppLayout from "@/components/layout/AppLayout";
 import StudioHeader from "@/components/ui/StudioHeader";
 import { useSidebarNavigation } from "@/hooks/useSidebarNavigation";
 import Button from "@/components/ui/Button";
 import GradientBorderBox from "@/components/ui/GradientBorderBox";
 import Avatar from "@/components/ui/Avatar";
+import { ProtectedPage } from "@/components/ProtectedPage";
 
 export default function ClonesPage() {
   const navigationItems = useSidebarNavigation();
@@ -68,81 +70,71 @@ export default function ClonesPage() {
   ];
 
   return (
-    <div className="flex h-screen">
-      <Sidebar
-        userName="Utkarsh Chandel"
-        workspaceName="CommunalAI"
-        workspaces={[]}
-        navigationItems={navigationItems}
-        recentItems={recentItems}
-        onWorkspaceChange={(workspace) =>
-          console.log("Workspace changed to:", workspace)
-        }
-      />
-
-      <div className="flex-1 relative overflow-y-auto bg-gray-50">
-        <StudioHeader />
-        <div className="p-8">
-          {/* Breadcrumbs */}
-          <div className="text-[13px] text-gray-500 mb-6">
-            Home <span className="text-gray-400">›</span> My Clones
-            <span className="text-gray-400"> ›</span> Clone Templates
-          </div>
-
-          {/* Header row: Title + actions */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-2xl font-semibold text-[#383838] tracking-tight">
-                Clone Templates
-              </h2>
-              <p className="text-sm text-[#484848]">
-                Review your clone’s completion status before publishing
-              </p>
+    <ProtectedPage>
+      <AppLayout>
+        <div className="flex-1 relative overflow-y-auto bg-gray-50">
+          <StudioHeader />
+          <div className="p-8">
+            {/* Breadcrumbs */}
+            <div className="text-[13px] text-gray-500 mb-6">
+              Home <span className="text-gray-400">›</span> My Clones
+              <span className="text-gray-400"> ›</span> Clone Templates
             </div>
-            <div className="flex gap-3">
-              <Button variant="secondary">Explore Templates</Button>
-              <Button variant="gradient">Create New Clone</Button>
+
+            {/* Header row: Title + actions */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-2xl font-semibold text-[#383838] tracking-tight">
+                  Clone Templates
+                </h2>
+                <p className="text-sm text-[#484848]">
+                  Review your clone’s completion status before publishing
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button variant="secondary">Explore Templates</Button>
+                <Button variant="gradient">Create New Clone</Button>
+              </div>
             </div>
-          </div>
 
-          {/* Grid of clone cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-10">
-            {cloneTemplates.map((ct) => (
-              <GradientBorderBox key={ct.id} innerClassName="p-4">
-                <div className="flex items-start justify-between">
-                  <Avatar name={ct.name} role={ct.role} size="md" />
-                  <span className="px-2 py-0.5 rounded-[10px] text-[14px] leading-4 text-[#34a853] bg-[#f4f4f4] border border-[rgba(52,168,83,0.3)]">
-                    {ct.status}
-                  </span>
-                </div>
-
-                <div className="my-4 h-px bg-[#efefef]" />
-
-                <p className="text-[14px] text-[#616161]">{ct.description}</p>
-
-                <div className="mt-4 flex gap-2">
-                  {ct.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-1 rounded-md border border-[rgba(130,130,130,0.15)] text-[#828282] text-[14px]"
-                    >
-                      {tag}
+            {/* Grid of clone cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 mb-10">
+              {cloneTemplates.map((ct) => (
+                <GradientBorderBox key={ct.id} innerClassName="p-4">
+                  <div className="flex items-start justify-between">
+                    <Avatar name={ct.name} role={ct.role} size="md" />
+                    <span className="px-2 py-0.5 rounded-[10px] text-[14px] leading-4 text-[#34a853] bg-[#f4f4f4] border border-[rgba(52,168,83,0.3)]">
+                      {ct.status}
                     </span>
-                  ))}
-                </div>
+                  </div>
 
-                <div className="mt-3 text-[10px] italic text-[#717680]">
-                  Last Updated: {ct.updatedAt}
-                </div>
-              </GradientBorderBox>
-            ))}
-          </div>
+                  <div className="my-4 h-px bg-[#efefef]" />
 
-          {/* Divider */}
-          {/* <div className="h-px bg-gray-200 mb-8" /> */}
+                  <p className="text-[14px] text-[#616161]">{ct.description}</p>
 
-          {/* Danger Zone */}
-          {/* <div className="mb-4">
+                  <div className="mt-4 flex gap-2">
+                    {ct.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2 py-1 rounded-md border border-[rgba(130,130,130,0.15)] text-[#828282] text-[14px]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 text-[10px] italic text-[#717680]">
+                    Last Updated: {ct.updatedAt}
+                  </div>
+                </GradientBorderBox>
+              ))}
+            </div>
+
+            {/* Divider */}
+            {/* <div className="h-px bg-gray-200 mb-8" /> */}
+
+            {/* Danger Zone */}
+            {/* <div className="mb-4">
             <h3 className="text-2xl font-semibold text-[#383838] tracking-tight">
               Danger Zone
             </h3>
@@ -150,7 +142,7 @@ export default function ClonesPage() {
               Irreversible actions for all clones.
             </p>
           </div> */}
-          {/* <div className="flex items-start justify-between gap-4 border border-red-500/60 rounded-lg p-4">
+            {/* <div className="flex items-start justify-between gap-4 border border-red-500/60 rounded-lg p-4">
             <div className="flex items-start gap-3">
               <div className="shrink-0 w-[33px] h-[33px] bg-white border rounded-lg" />
               <div>
@@ -164,8 +156,9 @@ export default function ClonesPage() {
             </div>
             <Button variant="danger">Delete Clones</Button>
           </div> */}
+          </div>
         </div>
-      </div>
-    </div>
+      </AppLayout>
+    </ProtectedPage>
   );
 }

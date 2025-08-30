@@ -29,6 +29,8 @@ interface ChatInputTextAreaProps {
   placeholder?: string;
   disabled?: boolean;
   loading?: boolean;
+  generating?: boolean;
+  onStop?: () => void;
 }
 
 export default function ChatInputTextArea({
@@ -36,6 +38,8 @@ export default function ChatInputTextArea({
   placeholder = "What expertise are we scaling today?",
   disabled = false,
   loading = false,
+  generating = false,
+  onStop,
 }: ChatInputTextAreaProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -94,23 +98,37 @@ export default function ChatInputTextArea({
               rows={4}
             />
 
-            {/* Send Button */}
+            {/* Send/Stop Button */}
             <div className="flex items-end p-4">
               <button
-                type="submit"
-                disabled={!message.trim() || disabled || loading}
+                type={generating ? "button" : "submit"}
+                disabled={
+                  generating ? false : !message.trim() || disabled || loading
+                }
                 className={`
                     w-11 h-[41px] rounded-lg 
-                    bg-gradient-to-r from-violet-700 to-violet-400 
-                    hover:from-violet-900 hover:to-violet-700
+                    ${
+                      generating
+                        ? "bg-red-500 hover:bg-red-600"
+                        : "bg-gradient-to-r from-violet-700 to-violet-400 hover:from-violet-900 hover:to-violet-700"
+                    }
                     disabled:opacity-50 disabled:cursor-not-allowed
                     flex items-center justify-center
                     transition-all duration-200 shadow-sm
                     ${loading ? "animate-pulse" : ""}
                   `}
-                aria-label={loading ? "Sending..." : "Send message"}
+                aria-label={
+                  generating
+                    ? "Stop generating"
+                    : loading
+                    ? "Sending..."
+                    : "Send message"
+                }
+                onClick={generating ? onStop : undefined}
               >
-                {loading ? (
+                {generating ? (
+                  <span className="text-white text-sm">Stop</span>
+                ) : loading ? (
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <SendIcon className="w-4 h-4" />

@@ -13,6 +13,7 @@ export type SidebarRoute = {
   href: string;
   Icon: React.ComponentType<React.ComponentProps<"svg">>;
   activeMatch?: "exact" | "startsWith";
+  disabled?: boolean;
 };
 
 export const SIDEBAR_ROUTES: SidebarRoute[] = [
@@ -37,13 +38,14 @@ export const SIDEBAR_ROUTES: SidebarRoute[] = [
     Icon: ClipboardDocumentIcon,
     activeMatch: "exact",
   },
-  {
-    id: "studio",
-    label: "Studio",
-    href: "/studio",
-    Icon: CommandLineIcon,
-    activeMatch: "exact",
-  },
+  // {
+  //   id: "studio",
+  //   label: "Studio",
+  //   href: "/studio",
+  //   Icon: CommandLineIcon,
+  //   activeMatch: "exact",
+  //   disabled: true,
+  // },
   {
     id: "marketplace",
     label: "Marketplace",

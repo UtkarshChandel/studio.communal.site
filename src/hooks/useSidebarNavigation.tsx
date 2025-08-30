@@ -20,7 +20,8 @@ export function useSidebarNavigation(): NavigationItem[] {
       label: route.label,
       icon: <route.Icon />,
       isActive,
-      onClick: () => router.push(route.href),
+      onClick: route.disabled ? undefined : () => router.push(route.href),
+      disabled: route.disabled,
     };
   });
 }

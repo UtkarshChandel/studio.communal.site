@@ -8,6 +8,7 @@ export interface NavigationItem {
   icon: ReactNode;
   isActive?: boolean;
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 interface NavigationListProps {
@@ -44,6 +45,7 @@ export default function NavigationList({
                     }
                   : {}
               }
+              disabled={item.disabled}
             >
               <span
                 className={`w-5 h-5 ${

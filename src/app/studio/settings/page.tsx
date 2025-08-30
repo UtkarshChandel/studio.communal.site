@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/ui/Sidebar";
+import AppLayout from "@/components/layout/AppLayout";
 import StudioHeader from "@/components/ui/StudioHeader";
 import { useSidebarNavigation } from "@/hooks/useSidebarNavigation";
 import MetricCard from "@/components/ui/MetricCard";
@@ -36,20 +36,7 @@ export default function AgentSettingsPage() {
   ];
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar */}
-      <Sidebar
-        userName="sneha Gupta"
-        workspaceName="My Workspace"
-        workspaces={["My Workspace", "Team Workspace", "Client Workspace"]}
-        navigationItems={navigationItems}
-        recentItems={recentItems}
-        onWorkspaceChange={(workspace) =>
-          console.log("Workspace changed to:", workspace)
-        }
-      />
-
-      {/* Main Content Area */}
+    <AppLayout>
       <div className="flex-1 relative overflow-y-auto bg-white">
         {/* Header */}
         <StudioHeader />
@@ -213,6 +200,6 @@ export default function AgentSettingsPage() {
           </div>
         </div>
       </div>
-    </div>
+    </AppLayout>
   );
 }

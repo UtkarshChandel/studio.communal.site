@@ -6,6 +6,7 @@ interface AnimatedChevronProps {
   className?: string;
   count?: number;
   direction?: "up" | "down" | "left" | "right";
+  onClick?: () => void;
 }
 
 export const AnimatedChevron: React.FC<AnimatedChevronProps> = ({
@@ -14,6 +15,7 @@ export const AnimatedChevron: React.FC<AnimatedChevronProps> = ({
   className = "",
   count = 3,
   direction = "down",
+  onClick,
 }) => {
   const sizeClasses = {
     sm: "w-6 h-6",
@@ -29,7 +31,22 @@ export const AnimatedChevron: React.FC<AnimatedChevronProps> = ({
   };
 
   return (
-    <div className={`flex flex-col items-center z-20 ${className}`}>
+    <div
+      className={`flex flex-col items-center z-20 ${
+        onClick ? "cursor-pointer" : ""
+      } ${className}`}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : -1}
+      aria-label={onClick ? "Scroll" : undefined}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (!onClick) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+    >
       {Array.from({ length: count }).map((_, i) => (
         <svg
           key={i}

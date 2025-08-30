@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import StreamingMarkdown from "@/components/ui/StreamingMarkdown";
 
 const LikeIcon = ({
   className = "",
@@ -61,6 +62,7 @@ interface AIMessageProps {
   onDislike?: () => void;
   onCopy?: () => void;
   className?: string;
+  showCaret?: boolean;
 }
 
 export default function AIMessage({
@@ -70,6 +72,7 @@ export default function AIMessage({
   onDislike,
   onCopy,
   className = "",
+  showCaret = false,
 }: AIMessageProps) {
   const [likeState, setLikeState] = useState<"none" | "liked" | "disliked">(
     "none"
@@ -109,9 +112,10 @@ export default function AIMessage({
       {/* AI Message Content with inline action buttons */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
-          <p className="text-gray-900 whitespace-pre-wrap text-[16px] leading-[24px] tracking-[-0.01em] font-geist">
-            {message}
-          </p>
+          <StreamingMarkdown content={message} />
+          {showCaret && (
+            <span className="inline-block w-3 h-[1.2em] align-[-0.2em] ml-0.5 animate-pulse bg-gray-300 rounded-sm" />
+          )}
         </div>
 
         {/* Action Buttons */}

@@ -20,6 +20,12 @@ interface ChatWindowProps {
   showMessageActions?: boolean;
   userName?: string;
   userAvatar?: string;
+  generating?: boolean;
+  onStop?: () => void;
+  onReachTop?: () => void | Promise<void>;
+  loadingTop?: boolean;
+  scrollToBottomSignal?: number;
+  showEmptyPlaceholder?: boolean;
 }
 
 export default function ChatWindow({
@@ -30,17 +36,60 @@ export default function ChatWindow({
   showMessageActions = true,
   userName = "You",
   userAvatar,
+  generating = false,
+  onStop,
+  onReachTop,
+  loadingTop = false,
+  scrollToBottomSignal,
+  showEmptyPlaceholder = true,
 }: ChatWindowProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const prevTopRef = useRef<number>(0);
+  const prevHeightRef = useRef<number>(0);
+  const wasLoadingTopRef = useRef<boolean>(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Preserve scroll position when prepending older messages
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const el = containerRef.current;
+    if (!el) return;
+    if (loadingTop && !wasLoadingTopRef.current) {
+      prevTopRef.current = el.scrollTop;
+      prevHeightRef.current = el.scrollHeight;
+      wasLoadingTopRef.current = true;
+    }
+  }, [loadingTop]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (wasLoadingTopRef.current && !loadingTop) {
+      const newHeight = el.scrollHeight;
+      const delta = newHeight - (prevHeightRef.current || 0);
+      el.scrollTop = (prevTopRef.current || 0) + delta;
+      wasLoadingTopRef.current = false;
+      return;
+    }
+    // Auto-scroll only if user is near the bottom or we are generating
+    const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 80;
+    if (generating || isLoading || nearBottom) {
+      scrollToBottom();
+    }
+  }, [messages, generating, isLoading, loadingTop]);
+
+  // Explicit scroll-to-bottom requests (e.g., after initial history load)
+  useEffect(() => {
+    if (scrollToBottomSignal !== undefined) {
+      scrollToBottom();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scrollToBottomSignal]);
 
   const handleSendMessage = async (message: string) => {
     if (onSendMessage) {
@@ -70,23 +119,46 @@ export default function ChatWindow({
       className={`relative flex flex-col h-full bg-white rounded-[20px] shadow-xl border border-gray-200 ${className}`}
     >
       {/* Chat Messages Area - now takes full height and has bottom padding */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 pb-48">
-        {messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            <p className="text-center">
-              Hey there, Let&#39;s get started.
-              <br />
-              What expertise would you like to model in your AI self today?
-            </p>
+      <div
+        className="flex-1 overflow-y-auto p-6 space-y-4 pb-48"
+        onScroll={(e) => {
+          const el = e.currentTarget as HTMLElement;
+          if (el.scrollTop <= 0) {
+            onReachTop?.();
+          }
+        }}
+        ref={containerRef}
+      >
+        {loadingTop && (
+          <div className="space-y-3 mb-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={`top-skel-${i}`} className="animate-pulse">
+                <div className="h-4 w-20 bg-gray-200 rounded mb-2" />
+                <div className="h-12 bg-gray-100 rounded" />
+              </div>
+            ))}
           </div>
+        )}
+        {messages.length === 0 ? (
+          showEmptyPlaceholder ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-5 w-24 bg-gray-200 rounded mb-2" />
+                  <div className="h-16 bg-gray-100 rounded" />
+                </div>
+              ))}
+            </div>
+          ) : null
         ) : (
           <>
-            {messages.map((message) => (
+            {messages.map((message, idx) => (
               <div key={message.id}>
                 {message.type === "ai" ? (
                   <AIMessage
                     message={message.content}
                     showActions={showMessageActions}
+                    showCaret={generating && idx === messages.length - 1}
                     onLike={() => handleLikeMessage(message.id)}
                     onDislike={() => handleDislikeMessage(message.id)}
                     onCopy={() => handleCopyMessage(message.id)}
@@ -126,6 +198,8 @@ export default function ChatWindow({
           onSubmit={handleSendMessage}
           placeholder={placeholder}
           loading={isLoading}
+          generating={generating}
+          onStop={onStop}
         />
       </div>
     </div>
