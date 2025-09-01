@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { logger } from "@/lib/logger";
 
 export default function StreamingMarkdown({
   content,
@@ -9,6 +10,12 @@ export default function StreamingMarkdown({
   content: string;
   className?: string;
 }) {
+  logger.component("StreamingMarkdown", "render - content:", content);
+  logger.component(
+    "StreamingMarkdown",
+    "render - content length:",
+    content?.length
+  );
   const [Renderer, setRenderer] = React.useState<React.ComponentType<{
     content: string;
     className?: string;
@@ -32,6 +39,7 @@ export default function StreamingMarkdown({
   }, []);
 
   if (Renderer) {
+    logger.component("StreamingMarkdown", "using Renderer component");
     try {
       // Try children first (common for markdown renderers); fallback to content prop
       return (
@@ -40,6 +48,7 @@ export default function StreamingMarkdown({
         </div>
       );
     } catch (_e) {
+      logger.component("StreamingMarkdown", "Renderer failed, using fallback");
       return (
         <div className={className}>
           <Renderer content={content} />
@@ -48,6 +57,7 @@ export default function StreamingMarkdown({
     }
   }
 
+  logger.component("StreamingMarkdown", "using fallback <pre> element");
   return (
     <pre
       className={`whitespace-pre-wrap text-[16px] leading-[24px] tracking-[-0.01em] font-geist ${className}`}

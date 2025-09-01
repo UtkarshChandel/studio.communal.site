@@ -10,6 +10,7 @@ import ChatWindow, { Message } from "@/components/ui/ChatWindow";
 import { ProtectedPage } from "@/components/ProtectedPage";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useUserStore } from "@/store/useUserStore";
+import { logger } from "@/lib/logger";
 import { streamInterviewerMessage } from "@/lib/chat";
 import {
   fetchSessionHistory,
@@ -123,12 +124,19 @@ export default function StudioSessionPage() {
       if (buf && buf.length > 0) {
         const nextChar = buf[0];
         typeBufferRef.current = buf.slice(1);
+        logger.chat(
+          "Typing character:",
+          nextChar,
+          "remaining buffer:",
+          typeBufferRef.current
+        );
         setChatMessages((prev) =>
           prev.map((m) =>
             m.id === aiId ? { ...m, content: (m.content || "") + nextChar } : m
           )
         );
       } else if (streamDoneRef.current) {
+        logger.chat("Typing loop finished, cleaning up");
         if (typingTimerRef.current) {
           clearInterval(typingTimerRef.current);
           typingTimerRef.current = null;
@@ -163,10 +171,18 @@ export default function StudioSessionPage() {
     // Start streaming from backend
     const sessionId = params?.sessionId as string;
     const aiId = `${Date.now()}-ai`;
-    setChatMessages((prev) => [
-      ...prev,
-      { id: aiId, type: "ai", content: "", timestamp: new Date() },
-    ]);
+    const newAiMessage = {
+      id: aiId,
+      type: "ai" as const,
+      content: "",
+      timestamp: new Date(),
+    };
+    logger.chat("Creating AI message:", newAiMessage);
+    setChatMessages((prev) => {
+      const updated = [...prev, newAiMessage];
+      logger.chat("Updated chat messages:", updated);
+      return updated;
+    });
     // reset streaming helpers
     typeBufferRef.current = "";
     streamDoneRef.current = false;
@@ -177,15 +193,35 @@ export default function StudioSessionPage() {
       user?.name || "default",
       {
         onDelta: (chunk) => {
+          logger.chat("Studio onDelta received chunk:", chunk);
+          logger.chat("Current typeBuffer:", typeBufferRef.current);
+
+          // TEMPORARY: Direct update to test if typing animation is the issue
+          setChatMessages((prev) => {
+            const updated = prev.map((m) =>
+              m.id === aiId ? { ...m, content: (m.content || "") + chunk } : m
+            );
+            logger.chat("Direct update - looking for aiId:", aiId);
+            logger.chat(
+              "Direct update - found message:",
+              updated.find((m) => m.id === aiId)
+            );
+            logger.chat("Direct update - all messages:", updated);
+            return updated;
+          });
+
           // If, for any reason, the typing loop hasn't started yet, start it lazily
           if (!typingTimerRef.current) {
+            logger.chat("Starting typing loop for aiId:", aiId);
             startTypingLoop(aiId);
           }
           // Ensure generating state becomes true ASAP for caret visibility
           if (!streamingAiId) {
+            logger.chat("Setting streaming AI ID:", aiId);
             setStreamingAiId(aiId);
           }
           typeBufferRef.current += chunk;
+          logger.chat("Updated typeBuffer:", typeBufferRef.current);
         },
         onError: () => {
           // treat as done to update UI

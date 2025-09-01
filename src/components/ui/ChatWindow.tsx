@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import AIMessage from "./AIMessage";
 import HumanMessage from "./HumanMessage";
 import ChatInputTextArea from "./ChatInputTextArea";
+import { logger } from "@/lib/logger";
 
 export interface Message {
   id: string;
@@ -45,6 +46,9 @@ export default function ChatWindow({
   showEmptyPlaceholder = true,
   disabled = false,
 }: ChatWindowProps) {
+  logger.component("ChatWindow", "render - messages count:", messages.length);
+  logger.component("ChatWindow", "render - messages:", messages);
+  logger.component("ChatWindow", "render - generating:", generating);
   const [isLoading, setIsLoading] = useState(false);
   // const [isStreaming, setIsStreaming] = useState(false); // Unused
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -153,26 +157,36 @@ export default function ChatWindow({
           ) : null
         ) : (
           <>
-            {messages.map((message, idx) => (
-              <div key={message.id}>
-                {message.type === "ai" ? (
-                  <AIMessage
-                    message={message.content}
-                    showActions={showMessageActions}
-                    showCaret={generating && idx === messages.length - 1}
-                    onLike={() => handleLikeMessage(message.id)}
-                    onDislike={() => handleDislikeMessage(message.id)}
-                    onCopy={() => handleCopyMessage(message.id)}
-                  />
-                ) : (
-                  <HumanMessage
-                    message={message.content}
-                    userName={message.userName || userName}
-                    userAvatar={message.userAvatar || userAvatar}
-                  />
-                )}
-              </div>
-            ))}
+            {messages.map((message, idx) => {
+              logger.component(
+                "ChatWindow",
+                "rendering message:",
+                message.id,
+                message.type,
+                "content length:",
+                message.content?.length
+              );
+              return (
+                <div key={message.id}>
+                  {message.type === "ai" ? (
+                    <AIMessage
+                      message={message.content}
+                      showActions={showMessageActions}
+                      showCaret={generating && idx === messages.length - 1}
+                      onLike={() => handleLikeMessage(message.id)}
+                      onDislike={() => handleDislikeMessage(message.id)}
+                      onCopy={() => handleCopyMessage(message.id)}
+                    />
+                  ) : (
+                    <HumanMessage
+                      message={message.content}
+                      userName={message.userName || userName}
+                      userAvatar={message.userAvatar || userAvatar}
+                    />
+                  )}
+                </div>
+              );
+            })}
             {isLoading && (
               <div className="flex items-center space-x-2 text-gray-500">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>

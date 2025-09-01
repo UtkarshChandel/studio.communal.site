@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import StreamingMarkdown from "@/components/ui/StreamingMarkdown";
+import { logger } from "@/lib/logger";
 
 const LikeIcon = ({
   className = "",
@@ -74,6 +75,8 @@ export default function AIMessage({
   className = "",
   showCaret = false,
 }: AIMessageProps) {
+  logger.component("AIMessage", "render - message content:", message);
+  logger.component("AIMessage", "render - showCaret:", showCaret);
   const [likeState, setLikeState] = useState<"none" | "liked" | "disliked">(
     "none"
   );
@@ -112,6 +115,10 @@ export default function AIMessage({
       {/* AI Message Content with inline action buttons */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
         <div className="flex-1 w-full sm:w-auto">
+          {/* TEMPORARY: Direct text rendering to test if StreamingMarkdown is the issue */}
+          <div className="whitespace-pre-wrap text-[16px] leading-[24px] tracking-[-0.01em]">
+            {message}
+          </div>
           <StreamingMarkdown content={message} />
           {showCaret && (
             <span className="inline-block w-3 h-[1.2em] align-[-0.2em] ml-0.5 animate-pulse bg-gray-300 rounded-sm" />

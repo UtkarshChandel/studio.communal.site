@@ -1,4 +1,5 @@
 import { getApiBaseUrl } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 export type StreamHandler = {
     onDelta?: (text: string) => void;
@@ -38,13 +39,16 @@ export function streamInterviewerMessage(
         if (finished) return;
         try {
             const raw = typeof e.data === "string" ? e.data : String(e.data);
+            logger.sse("Raw data:", raw);
             const frame = JSON.parse(raw) as Frame;
+            logger.sse("Parsed frame:", frame);
             switch (frame?.type) {
                 case "start":
                     // no-op for now
                     break;
                 case "delta": {
                     const text = frame.data || "";
+                    logger.sse("Delta text:", text);
                     handlers.onDelta?.(text);
                     break;
                 }
