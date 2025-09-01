@@ -24,13 +24,13 @@ export const SIDEBAR_ROUTES: SidebarRoute[] = [
     Icon: HomeIcon,
     activeMatch: "exact",
   },
-  {
-    id: "clones",
-    label: "My Clones",
-    href: "/clones",
-    Icon: DocumentDuplicateIcon,
-    activeMatch: "exact",
-  },
+  // {
+  //   id: "clones",
+  //   label: "My Clones",
+  //   href: "/clones",
+  //   Icon: DocumentDuplicateIcon,
+  //   activeMatch: "exact",
+  // },
   {
     id: "templates",
     label: "Templates",

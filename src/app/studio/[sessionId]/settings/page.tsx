@@ -13,15 +13,16 @@ import SettingsProfileHeader, {
   EditableSessionHeader,
 } from "@/components/ui/SettingsProfileHeader";
 import { ProtectedPage } from "@/components/ProtectedPage";
+import { useToastStore } from "@/store/useToastStore";
 
 export default function SessionSettingsPage() {
   const params = useParams<{ sessionId: string }>();
   const sessionId = params?.sessionId as string;
   // Hydrate from session store if available (populated by listSessions)
   const { useSessionStore } = require("@/store/useSessionStore");
-  const sessionInStore = useSessionStore
-    .getState()
-    .sessions.find((s: any) => s.id === sessionId);
+  const sessionInStore = useSessionStore((state: any) =>
+    state.sessions.find((s: any) => s.id === sessionId)
+  );
   const [name, setName] = React.useState<string>(sessionInStore?.name || "");
   const [description, setDescription] = React.useState<string>(
     sessionInStore?.description || ""
@@ -37,8 +38,12 @@ export default function SessionSettingsPage() {
     relationships: number;
   } | null>(null);
   const [loadingStatus, setLoadingStatus] = React.useState<boolean>(false);
+  const [publishingSession, setPublishingSession] =
+    React.useState<boolean>(false);
+  const [publishError, setPublishError] = React.useState<string>("");
+  const { addToast } = useToastStore();
   const tabs = [
-    { value: "published", label: "Published settings" },
+    { value: "published", label: "Share" },
     { value: "configure", label: "Configure" },
     { value: "monetise", label: "Monetise" },
     { value: "feedback", label: "Feedback" },
@@ -56,6 +61,55 @@ export default function SessionSettingsPage() {
     });
     return () => unsub();
   }, [sessionId]);
+
+  // Handle publish/unpublish actions
+  const handlePublishAction = async () => {
+    if (!sessionId || publishingSession) return;
+
+    try {
+      setPublishingSession(true);
+      setPublishError(""); // Clear previous errors
+      const { publishSession, unpublishSession } = require("@/lib/sessions");
+      const { useUserStore } = require("@/store/useUserStore");
+
+      const user = useUserStore.getState().user;
+      const currentSession = sessionInStore;
+
+      if (currentSession?.isPublished) {
+        // Unpublish session
+        await unpublishSession(sessionId);
+        // Update session store
+        useSessionStore
+          .getState()
+          .updateSession(sessionId, { isPublished: false });
+      } else {
+        // Publish session (this will check isReadyToPublish first)
+        await publishSession(sessionId);
+        // Update session store
+        useSessionStore
+          .getState()
+          .updateSession(sessionId, { isPublished: true });
+      }
+    } catch (error: any) {
+      console.error("Failed to update publishing status:", error);
+      setPublishError(error.message || "Failed to update publishing status");
+    } finally {
+      setPublishingSession(false);
+    }
+  };
+
+  // Generate public URL
+  const generatePublicUrl = () => {
+    if (!sessionInStore?.isPublished) return "";
+    const { generatePublicUrl } = require("@/lib/sessions");
+    const { useUserStore } = require("@/store/useUserStore");
+    const user = useUserStore.getState().user;
+    return generatePublicUrl(
+      user?.name || "user",
+      sessionInStore?.name || "session",
+      sessionId
+    );
+  };
 
   // Load publishing status on mount
   React.useEffect(() => {
@@ -144,6 +198,87 @@ export default function SessionSettingsPage() {
                       }}
                       subtitle="Overall Status"
                     />
+                  </div>
+
+                  <div>
+                    <SettingsSectionHeader
+                      title="Share Your Clone"
+                      subtitle="Choose how you want to distribute your clone"
+                      className="font-inter"
+                    />
+                    <div className="space-y-4">
+                      <SettingsOptionCard
+                        icon={<FigmaLinkIcon className="w-6 h-6" />}
+                        title="Generate Public Link"
+                        description="Create a shareable link for anyone to try your clone"
+                        linkUrl={
+                          sessionInStore?.isPublished
+                            ? generatePublicUrl()
+                            : undefined
+                        }
+                        onCopyLink={
+                          sessionInStore?.isPublished
+                            ? () => {
+                                const url = generatePublicUrl();
+                                if (url) {
+                                  navigator.clipboard.writeText(url);
+                                  addToast({
+                                    message: "Copied",
+                                    type: "success",
+                                    duration: 2000,
+                                  });
+                                }
+                              }
+                            : undefined
+                        }
+                        extraAction={
+                          sessionInStore?.isPublished
+                            ? {
+                                label: publishingSession
+                                  ? "Unpublishing..."
+                                  : "Unpublish",
+                                onClick: handlePublishAction,
+                                variant: "danger",
+                              }
+                            : undefined
+                        }
+                        primaryAction={
+                          !sessionInStore?.isPublished
+                            ? {
+                                label: publishingSession
+                                  ? "Generating..."
+                                  : "Generate Link",
+                                onClick: handlePublishAction,
+                                variant: "secondary",
+                              }
+                            : undefined
+                        }
+                      />
+                      {publishError && (
+                        <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                          <div className="flex">
+                            <div className="flex-shrink-0">
+                              <svg
+                                className="h-5 w-5 text-red-400"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                            <div className="ml-3">
+                              <p className="text-sm text-red-800">
+                                {publishError}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div>

@@ -1,16 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore";
 import PageLoader from "@/components/ui/PageLoader";
 import { listSessions } from "@/lib/sessions";
 import { useSessionStore } from "@/store/useSessionStore";
+import ToastContainer from "@/components/ui/Toast";
 
 export function RootProvider({ children }: { children: React.ReactNode }) {
   const [isHydrated, setIsHydrated] = useState(false);
+  const pathname = usePathname();
+
+  // Define routes that don't need authentication
+  const isPublicRoute =
+    pathname?.match(/^\/[^\/]+\/[^\/]+\/[^\/]+$/) || // [username]/[agentName]/[sessionId]
+    pathname === "/login" ||
+    pathname?.startsWith("/api") ||
+    pathname?.startsWith("/_next");
 
   useEffect(() => {
     const checkInitialAuth = async () => {
+      // Skip auth check for public routes
+      if (isPublicRoute) {
+        setIsHydrated(true);
+        return;
+      }
       try {
         const res = await fetch("/api/auth/me", {
           method: "GET",
@@ -38,6 +53,7 @@ export function RootProvider({ children }: { children: React.ReactNode }) {
                     tags: s.tags ?? [],
                     cloneId: s.cloneId,
                     createdAt: s.createdAt,
+                    isPublished: s.isPublished ?? false,
                   }))
                 );
               })
@@ -58,8 +74,13 @@ export function RootProvider({ children }: { children: React.ReactNode }) {
       }
     };
     checkInitialAuth();
-  }, []);
+  }, [isPublicRoute]);
 
   if (!isHydrated) return <PageLoader message="Loading" />;
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ToastContainer />
+    </>
+  );
 }

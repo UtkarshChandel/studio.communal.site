@@ -7,6 +7,7 @@ export interface SessionItem {
     tags?: string[];
     cloneId?: string;
     createdAt?: string;
+    isPublished?: boolean;
 }
 
 interface SessionState {

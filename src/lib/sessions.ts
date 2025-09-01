@@ -36,6 +36,7 @@ export interface ListSessionsResponse {
         description?: string | null;
         tags?: string[];
         createdAt: string;
+        isPublished?: boolean;
     }>;
 }
 
@@ -115,6 +116,50 @@ export async function fetchPublishingStatus(sessionId: string) {
         throw new Error(res.error || res.data?.message || "Failed to fetch publishing status");
     }
     return res.data.data;
+}
+
+// ---- Publish/Unpublish session ----
+export type UpdatePublishStatusResponse = {
+    success: boolean;
+    message?: string;
+    data?: {
+        id: string;
+        isPublished: boolean;
+    };
+};
+
+export async function updatePublishStatus(sessionId: string, isPublished: boolean) {
+    const res = await httpClient.patch<UpdatePublishStatusResponse>(
+        `/api/v1/sessions/${encodeURIComponent(sessionId)}/published`,
+        { isPublished },
+        { credentials: "include" as RequestCredentials }
+    );
+    if (res.error || !res.data?.success) {
+        throw new Error(res.error || res.data?.message || "Failed to update publish status");
+    }
+    return res.data.data;
+}
+
+// Convenience functions
+export async function publishSession(sessionId: string) {
+    // First check if ready to publish
+    const status = await fetchPublishingStatus(sessionId);
+    if (!status.isReadyToPublish) {
+        throw new Error("Session is not ready to publish yet. Please ensure all requirements are met.");
+    }
+    return await updatePublishStatus(sessionId, true);
+}
+
+export async function unpublishSession(sessionId: string) {
+    return await updatePublishStatus(sessionId, false);
+}
+
+// Generate public URL for published session
+export function generatePublicUrl(username: string, sessionName: string, sessionId: string) {
+    const baseUrl = process.env.NEXT_PUBLIC_CURRENT_BASE_URL || "http://localhost:3000";
+    const cleanUsername = username.toLowerCase().replace(/\s+/g, "-");
+    const cleanSessionName = sessionName.toLowerCase().replace(/\s+/g, "-");
+    return `${baseUrl}/${cleanUsername}/${cleanSessionName}/${sessionId}`;
 }
 
 export async function fetchSessionHistory(

@@ -26,6 +26,7 @@ interface ChatWindowProps {
   loadingTop?: boolean;
   scrollToBottomSignal?: number;
   showEmptyPlaceholder?: boolean;
+  disabled?: boolean;
 }
 
 export default function ChatWindow({
@@ -42,6 +43,7 @@ export default function ChatWindow({
   loadingTop = false,
   scrollToBottomSignal,
   showEmptyPlaceholder = true,
+  disabled = false,
 }: ChatWindowProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -200,6 +202,7 @@ export default function ChatWindow({
           loading={isLoading}
           generating={generating}
           onStop={onStop}
+          disabled={disabled}
         />
       </div>
     </div>

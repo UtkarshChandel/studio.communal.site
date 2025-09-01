@@ -110,8 +110,8 @@ export default function AIMessage({
   return (
     <div className={`group relative ${className}`}>
       {/* AI Message Content with inline action buttons */}
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
+        <div className="flex-1 w-full sm:w-auto">
           <StreamingMarkdown content={message} />
           {showCaret && (
             <span className="inline-block w-3 h-[1.2em] align-[-0.2em] ml-0.5 animate-pulse bg-gray-300 rounded-sm" />
@@ -120,7 +120,7 @@ export default function AIMessage({
 
         {/* Action Buttons */}
         {showActions && (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0 mt-1">
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex-shrink-0 mt-1 sm:mt-1 justify-end sm:justify-start">
             {/* Like Button */}
             <button
               type="button"
