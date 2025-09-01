@@ -48,9 +48,7 @@ export default function Home() {
                 With AI Clones
               </HeroHeading>
 
-              <HeroSubtitle size="md">
-                Build. Train. Monetize. One Studio, Infinite Clones.
-              </HeroSubtitle>
+              <HeroSubtitle size="md">Build. Train. Monetize.</HeroSubtitle>
 
               {/* Chat Input */}
               <div className="mt-12">

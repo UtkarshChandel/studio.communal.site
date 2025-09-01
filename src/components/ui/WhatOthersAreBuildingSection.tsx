@@ -22,7 +22,7 @@ export default function WhatOthersAreBuildingSection({
       name: "Dr. Ray Titus",
       role: "Startups",
       description:
-        "Ray Titus is a serial entrepreneur and investor. He is the founder of several startups, including Ray Titus Startups, which is a platform for startups to find investors and mentors.",
+        "Ray Titus is a marketing professor, best-selling author, and consultant who blends academic insight with real-world expertise in consumer behavior and go-to-market strategy.",
       image: "/profiles/ray-titus-startups.png",
       floatingIcons: [
         // {
@@ -56,7 +56,7 @@ export default function WhatOthersAreBuildingSection({
       name: "Bhupesh Manoharan",
       role: "Marketeer",
       description:
-        "Your AI assistant learns from your docs, meetings, and chats and always stays up to date.",
+        "Bhupesh Manoharan is an academic leader and marketing professor whose research on digital technology, consumer behavior, and financial services has been published in leading international journals.",
       image: "/profiles/bhupesh-manoharan-marketting.png",
 
       floatingIcons: [
@@ -91,7 +91,7 @@ export default function WhatOthersAreBuildingSection({
       name: "Siddhart Menon",
       role: "Strategist",
       description:
-        "Ask siddhart for startup strategy and consulting, on market research primary and secondary, communication, leadership, research, data analysis, and more.",
+        "Siddhart Menon is a sales, marketing, and strategy specialist in the consumer and retail space with a strong record of driving business growth through innovation and leadership.",
       image: "/profiles/sid-menon.png",
       floatingIcons: [
         // {

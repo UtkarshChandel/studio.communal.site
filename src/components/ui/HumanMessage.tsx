@@ -41,9 +41,9 @@ export default function HumanMessage({
       {renderAvatar()}
 
       {/* Message Bubble */}
-      <div className="max-w-full sm:max-w-[80%]">
+      <div className="max-w-full sm:w-auto md:min-w-[80%] lg:max-w-[60%]">
         <div className="bg-[#e6ebff] p-[10px] rounded-xl block sm:inline-block">
-          <p className="text-[16px] leading-[24px] text-[#141413] font-normal tracking-[-0.01em] whitespace-pre-wrap font-inter">
+          <p className="text-[15.88px] leading-[26.4px] text-[#141413] font-normal tracking-[-0.24px] whitespace-pre-wrap break-words font-inter">
             {message}
           </p>
         </div>

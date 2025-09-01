@@ -114,9 +114,9 @@ export default function AIMessage({
     <div className={`group relative ${className}`}>
       {/* AI Message Content with inline action buttons */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-4">
-        <div className="flex-1 w-full sm:w-auto">
+        <div className="flex-1 w-full sm:w-auto md:min-w-[80%] lg:max-w-[60%]">
           {/* TEMPORARY: Direct text rendering to test if StreamingMarkdown is the issue */}
-          <div className="whitespace-pre-wrap text-[16px] leading-[24px] tracking-[-0.01em]">
+          <div className="whitespace-pre-wrap text-[15.88px] leading-[26.4px] tracking-[-0.24px] break-words font-inter font-normal">
             {message}
           </div>
           <StreamingMarkdown content={message} />

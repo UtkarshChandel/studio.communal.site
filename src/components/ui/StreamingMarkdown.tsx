@@ -60,7 +60,7 @@ export default function StreamingMarkdown({
   logger.component("StreamingMarkdown", "using fallback <pre> element");
   return (
     <pre
-      className={`whitespace-pre-wrap text-[16px] leading-[24px] tracking-[-0.01em] font-geist ${className}`}
+      className={`whitespace-pre-wrap text-[15.88px] leading-[26.4px] tracking-[-0.24px] font-inter font-normal ${className}`}
     >
       {content}
     </pre>

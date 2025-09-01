@@ -121,7 +121,7 @@ export default function ChatWindow({
 
   return (
     <div
-      className={`relative flex flex-col h-full bg-white rounded-[20px] shadow-xl border border-gray-200 ${className}`}
+      className={`relative flex font-inter flex-col h-full bg-white rounded-[20px] shadow-xl border border-gray-200 ${className}`}
     >
       {/* Chat Messages Area - now takes full height and has bottom padding */}
       <div
@@ -190,7 +190,7 @@ export default function ChatWindow({
             {isLoading && (
               <div className="flex items-center space-x-2 text-gray-500">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
-                <span className="text-sm">AI is thinking...</span>
+                <span className="text-sm">Thinking...</span>
               </div>
             )}
           </>

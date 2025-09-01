@@ -46,7 +46,7 @@ export default function PublicConsultantPage() {
     {
       id: "1",
       type: "ai" as const,
-      content: "Hey there, Let's get started.\n How can I help you today?",
+      content: "Hey there, Let's get started.\nHow can I help you today?",
       timestamp: new Date(),
     },
   ]);
