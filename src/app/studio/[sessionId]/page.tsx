@@ -304,8 +304,15 @@ export default function StudioSessionPage() {
                         />
                       </svg>
                     </button>
-                    <Button variant="secondary">Try</Button>
-                    <Button variant="gradient">Publish</Button>
+                    {/* <Button variant="secondary">Try</Button> */}
+                    <Button
+                      variant="gradient"
+                      onClick={() =>
+                        router.push(`/studio/${params?.sessionId}/settings`)
+                      }
+                    >
+                      Publish
+                    </Button>
                   </div>
                 </div>
               </div>
