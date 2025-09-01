@@ -9,15 +9,23 @@ export interface ApiResponse<T> {
 }
 
 export class HttpClient {
-    private readonly baseUrl: string;
+    private readonly useProxy: boolean;
 
-    constructor(baseUrl: string = getApiBaseUrl()) {
-        this.baseUrl = baseUrl;
+    constructor(useProxy: boolean = true) {
+        this.useProxy = useProxy;
     }
 
     private buildUrl(path: string): string {
         const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-        return `${this.baseUrl}${normalizedPath}`;
+
+        if (this.useProxy) {
+            // Use Next.js API proxy routes (frontend domain)
+            // This ensures proper cookie forwarding and CORS handling
+            return normalizedPath;
+        } else {
+            // Direct backend calls (only for specific cases)
+            return `${getApiBaseUrl()}${normalizedPath}`;
+        }
     }
 
     async request<T>(
