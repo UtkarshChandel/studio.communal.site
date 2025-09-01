@@ -284,7 +284,7 @@ export default function StudioSessionPage() {
                     showMessageActions={true}
                     showEmptyPlaceholder={showEmptyPlaceholder}
                     // wire stop button and caret
-                    // @ts-ignore augment component to accept generating/stop when available
+
                     generating={
                       Boolean(streamingAiId) || typeBufferRef.current.length > 0
                     }

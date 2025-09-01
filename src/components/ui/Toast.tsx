@@ -35,10 +35,10 @@ function Toast({ toast, onClose }: ToastProps) {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(onClose, 150); // Wait for animation to complete
-  };
+  // const handleClose = () => {
+  //   setIsVisible(false);
+  //   setTimeout(onClose, 150); // Wait for animation to complete
+  // };
 
   const getToastStyles = () => {
     const baseStyles = "transform transition-all duration-150 ease-in-out";

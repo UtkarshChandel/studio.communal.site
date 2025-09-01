@@ -152,7 +152,8 @@ export default function PublicConsultantPage() {
           case "start":
             break;
           case "delta":
-            accumulatedContent += event.data || "";
+            accumulatedContent +=
+              (typeof event.data === "string" ? event.data : "") || "";
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === aiMessageId
@@ -166,7 +167,9 @@ export default function PublicConsultantPage() {
             console.log("Tool event:", event.type, event.data);
             break;
           case "final":
-            accumulatedContent = event.data || accumulatedContent;
+            accumulatedContent =
+              (typeof event.data === "string" ? event.data : null) ||
+              accumulatedContent;
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.id === aiMessageId

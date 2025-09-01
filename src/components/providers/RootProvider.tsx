@@ -40,7 +40,11 @@ export function RootProvider({ children }: { children: React.ReactNode }) {
             useUserStore.getState().setUser(data.data);
             // kick off async session load (non-blocking)
             const { setLoading, setError, setSessions } =
-              useSessionStore.getState() as any;
+              useSessionStore.getState() as {
+                setLoading: (loading: boolean) => void;
+                setError: (error: string | null) => void;
+                setSessions: (sessions: unknown[]) => void;
+              };
             // Fire-and-forget: do NOT await here so the rest of the UI can render
             setLoading(true);
             listSessions()
@@ -57,8 +61,10 @@ export function RootProvider({ children }: { children: React.ReactNode }) {
                   }))
                 );
               })
-              .catch((e: any) => {
-                setError?.(e?.message || "Failed to load sessions");
+              .catch((e: unknown) => {
+                setError?.(
+                  e instanceof Error ? e.message : "Failed to load sessions"
+                );
               })
               .finally(() => {
                 setLoading?.(false);

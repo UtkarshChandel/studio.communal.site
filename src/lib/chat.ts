@@ -23,15 +23,15 @@ export function streamInterviewerMessage(
     )}/message?text=${encodeURIComponent(text)}&cloneId=${encodeURIComponent(cloneId)}`;
 
     const controller = new AbortController();
-    const es = new EventSource(url, { withCredentials: true } as any);
+    const es = new EventSource(url);
 
     let finished = false;
 
     type Frame =
-        | { type: "start"; data?: any }
+        | { type: "start"; data?: unknown }
         | { type: "delta"; data: string }
         | { type: "final"; data: string }
-        | { type: "end"; data?: any }
+        | { type: "end"; data?: unknown }
         | { type: "error"; data?: { message?: string } };
 
     es.onmessage = (e: MessageEvent) => {
@@ -61,7 +61,7 @@ export function streamInterviewerMessage(
                     break;
                 }
                 case "error": {
-                    const msg = (frame as any)?.data?.message || "stream_error";
+                    const msg = (frame as Frame & { type: "error" })?.data?.message || "stream_error";
                     handlers.onError?.(new Error(msg));
                     try { es.close(); } catch { }
                     finished = true;
@@ -70,8 +70,8 @@ export function streamInterviewerMessage(
                 default:
                     break;
             }
-        } catch (err: any) {
-            handlers.onError?.(err);
+        } catch (err: unknown) {
+            handlers.onError?.(err instanceof Error ? err : new Error(String(err)));
         }
     };
 

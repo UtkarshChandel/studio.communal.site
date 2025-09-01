@@ -41,10 +41,11 @@ export async function GET(req: NextRequest) {
                 headers: { "Content-Type": "text/plain" },
             });
         }
-    } catch (e: any) {
-        console.error("❌ /api/auth/me error:", e?.message || e);
+    } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        console.error("❌ /api/auth/me error:", errorMessage);
         return NextResponse.json(
-            { success: false, message: "Auth check failed", error: e?.message || "Unknown error" },
+            { success: false, message: "Auth check failed", error: errorMessage },
             { status: 500 }
         );
     }

@@ -6,6 +6,8 @@ import Tag from "./Tag";
 import EditIcon from "./icons/EditIcon";
 import CheckIcon from "./icons/CheckIcon";
 import CloseIcon from "./icons/CloseIcon";
+import { updateSession } from "@/lib/sessions";
+import { useSessionStore } from "@/store/useSessionStore";
 
 export interface SettingsProfileHeaderProps {
   name: string;
@@ -251,9 +253,6 @@ export function EditableSessionHeader({
       setDraftTags(draftTags.slice(0, -1));
     }
   };
-
-  const { updateSession } = require("@/lib/sessions");
-  const { useSessionStore } = require("@/store/useSessionStore");
 
   const commit = async () => {
     try {

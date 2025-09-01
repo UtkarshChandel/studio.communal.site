@@ -54,7 +54,7 @@ export function useMessageLimit() {
         const usage = loadUsage();
         setMessageCount(usage.count);
         setIsLimitReached(usage.count >= MESSAGE_LIMIT);
-    }, []);
+    }, []); // loadUsage is stable and doesn't need to be in dependencies
 
     // Increment message count
     const incrementCount = () => {

@@ -43,8 +43,8 @@ export function useStartSession() {
                 } catch { }
                 router.push(`/studio/${newSession.id}`);
                 // Optionally pass the initial message via query or local state if needed
-            } catch (e: any) {
-                setError(e?.message || "Failed to start session");
+            } catch (e: unknown) {
+                setError(e instanceof Error ? e.message : "Failed to start session");
             } finally {
                 setSubmitting(false);
                 setLoading(false);

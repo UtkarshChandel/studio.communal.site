@@ -9,19 +9,24 @@ import SettingsOptionCard from "@/components/ui/SettingsOptionCard";
 import SettingsSectionHeader from "@/components/ui/SettingsSectionHeader";
 import FigmaLinkIcon from "@/components/ui/icons/LinkIcon";
 import Tabs from "@/components/ui/Tabs";
-import SettingsProfileHeader, {
-  EditableSessionHeader,
-} from "@/components/ui/SettingsProfileHeader";
+import { EditableSessionHeader } from "@/components/ui/SettingsProfileHeader";
 import { ProtectedPage } from "@/components/ProtectedPage";
 import { useToastStore } from "@/store/useToastStore";
+import {
+  generatePublicUrl as generatePublicUrlFn,
+  fetchPublishingStatus,
+  publishSession,
+  unpublishSession,
+} from "@/lib/sessions";
+import { useUserStore } from "@/store/useUserStore";
+import { useSessionStore } from "@/store/useSessionStore";
 
 export default function SessionSettingsPage() {
   const params = useParams<{ sessionId: string }>();
   const sessionId = params?.sessionId as string;
   // Hydrate from session store if available (populated by listSessions)
-  const { useSessionStore } = require("@/store/useSessionStore");
-  const sessionInStore = useSessionStore((state: any) =>
-    state.sessions.find((s: any) => s.id === sessionId)
+  const sessionInStore = useSessionStore((state) =>
+    state.sessions.find((s) => s.id === sessionId)
   );
   const [name, setName] = React.useState<string>(sessionInStore?.name || "");
   const [description, setDescription] = React.useState<string>(
@@ -52,8 +57,8 @@ export default function SessionSettingsPage() {
 
   // Keep in sync with store updates (when sessions load later)
   React.useEffect(() => {
-    const unsub = useSessionStore.subscribe((state: any) => {
-      const s = state.sessions.find((x: any) => x.id === sessionId);
+    const unsub = useSessionStore.subscribe((state) => {
+      const s = state.sessions.find((x) => x.id === sessionId);
       if (!s) return;
       if (typeof s.name === "string") setName(s.name);
       if (typeof s.description === "string") setDescription(s.description);
@@ -69,10 +74,7 @@ export default function SessionSettingsPage() {
     try {
       setPublishingSession(true);
       setPublishError(""); // Clear previous errors
-      const { publishSession, unpublishSession } = require("@/lib/sessions");
-      const { useUserStore } = require("@/store/useUserStore");
-
-      const user = useUserStore.getState().user;
+      // const user = useUserStore.getState().user; // Currently unused
       const currentSession = sessionInStore;
 
       if (currentSession?.isPublished) {
@@ -90,9 +92,13 @@ export default function SessionSettingsPage() {
           .getState()
           .updateSession(sessionId, { isPublished: true });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to update publishing status:", error);
-      setPublishError(error.message || "Failed to update publishing status");
+      setPublishError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update publishing status"
+      );
     } finally {
       setPublishingSession(false);
     }
@@ -101,10 +107,8 @@ export default function SessionSettingsPage() {
   // Generate public URL
   const generatePublicUrl = () => {
     if (!sessionInStore?.isPublished) return "";
-    const { generatePublicUrl } = require("@/lib/sessions");
-    const { useUserStore } = require("@/store/useUserStore");
     const user = useUserStore.getState().user;
-    return generatePublicUrl(
+    return generatePublicUrlFn(
       user?.name || "user",
       sessionInStore?.name || "session",
       sessionId
@@ -117,7 +121,6 @@ export default function SessionSettingsPage() {
       if (!sessionId) return;
       try {
         setLoadingStatus(true);
-        const { fetchPublishingStatus } = require("@/lib/sessions");
         const status = await fetchPublishingStatus(sessionId);
         setPublishingStatus(status);
       } catch (error) {

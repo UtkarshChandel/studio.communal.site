@@ -46,7 +46,7 @@ export default function ChatWindow({
   disabled = false,
 }: ChatWindowProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
+  // const [isStreaming, setIsStreaming] = useState(false); // Unused
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const prevTopRef = useRef<number>(0);
@@ -90,7 +90,6 @@ export default function ChatWindow({
     if (scrollToBottomSignal !== undefined) {
       scrollToBottom();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollToBottomSignal]);
 
   const handleSendMessage = async (message: string) => {

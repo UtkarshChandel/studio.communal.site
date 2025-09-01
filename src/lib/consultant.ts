@@ -33,7 +33,7 @@ export async function createConsultantSession(sessionId: string): Promise<Consul
 
 export interface ConsultantSSEEvent {
     type: "start" | "delta" | "tool_start" | "tool_end" | "final" | "end" | "error";
-    data: any;
+    data: string | object | null;
 }
 
 export function streamConsultantMessage(
@@ -58,7 +58,10 @@ export function streamConsultantMessage(
                 onComplete?.();
             } else if (parsedEvent.type === "error") {
                 eventSource.close();
-                onError?.(new Error(parsedEvent.data?.message || "Unknown error"));
+                const errorMessage = typeof parsedEvent.data === "object" && parsedEvent.data && "message" in parsedEvent.data
+                    ? (parsedEvent.data as { message?: string }).message || "Unknown error"
+                    : "Unknown error";
+                onError?.(new Error(errorMessage));
             }
         } catch (err) {
             console.error("Error parsing SSE event:", err);

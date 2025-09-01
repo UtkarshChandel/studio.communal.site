@@ -3,10 +3,9 @@ import { getApiBaseUrl } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest, ctx: { params: any }) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ sessionId: string }> }) {
     const base = getApiBaseUrl().replace(/\/$/, "");
-    const p = ctx?.params;
-    const sessionId = (p && typeof p.then === "function") ? (await p).sessionId : p?.sessionId;
+    const { sessionId } = await ctx.params;
     const { searchParams } = new URL(req.url);
     const text = searchParams.get("text") ?? "";
     const cloneId = searchParams.get("cloneId") ?? "";
@@ -37,7 +36,7 @@ export async function GET(req: NextRequest, ctx: { params: any }) {
         });
 
         return new Response(upstream.body, { status: 200, headers });
-    } catch (e) {
+    } catch {
         return new Response("event: error\n" + `data: ${JSON.stringify({ error: "proxy_error" })}\n\n`, {
             status: 200,
             headers: { "Content-Type": "text/event-stream" },

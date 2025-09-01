@@ -85,7 +85,7 @@ export async function updateSession(
     sessionId: string,
     payload: UpdateSessionPayload
 ) {
-    const res = await httpClient.patch<any>(
+    const res = await httpClient.patch<{ success: boolean; message?: string; data?: unknown }>(
         `/api/v1/sessions/${encodeURIComponent(sessionId)}`,
         payload,
         { credentials: "include" as RequestCredentials }

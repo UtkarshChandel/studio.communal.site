@@ -9,13 +9,16 @@ export default function StreamingMarkdown({
   content: string;
   className?: string;
 }) {
-  const [Renderer, setRenderer] =
-    React.useState<React.ComponentType<any> | null>(null);
+  const [Renderer, setRenderer] = React.useState<React.ComponentType<{
+    content: string;
+    className?: string;
+  }> | null>(null);
 
   React.useEffect(() => {
     let mounted = true;
     import("streamdown")
       .then((m: any) => {
+        // eslint-disable-line @typescript-eslint/no-explicit-any
         if (!mounted) return;
         const Comp = m.Streamdown || m.default || null;
         if (Comp) setRenderer(() => Comp);
@@ -33,13 +36,12 @@ export default function StreamingMarkdown({
       // Try children first (common for markdown renderers); fallback to content prop
       return (
         <div className={className}>
-          <Renderer>{content}</Renderer>
+          <Renderer content={content} />
         </div>
       );
     } catch (_e) {
       return (
         <div className={className}>
-          {/* @ts-ignore */}
           <Renderer content={content} />
         </div>
       );

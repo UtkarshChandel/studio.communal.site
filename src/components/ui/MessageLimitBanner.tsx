@@ -38,8 +38,8 @@ export default function MessageLimitBanner({
             </h3>
             <div className="mt-1 text-sm text-red-700">
               <p>
-                You've reached your daily limit of {messageLimit} messages. Try
-                again in{" "}
+                You&apos;ve reached your daily limit of {messageLimit} messages.
+                Try again in{" "}
                 {timeUntilReset.hours > 0 && `${timeUntilReset.hours}h `}
                 {timeUntilReset.minutes}m when your limit resets.
               </p>
