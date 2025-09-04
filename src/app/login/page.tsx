@@ -68,9 +68,22 @@ export default function LoginPage() {
 
             {betaCode.length === 0 && (
               <div className="mt-2 text-[13px] text-[#d92d20] font-dm-sans">
-                Don’t have one? Request access at{" "}
-                <a href="mailto:hey@communal.site" className="font-dm-sans">
-                  hey@communal.site
+                Don’t have one? Request access -{" "}
+                <a
+                  href="https://calendly.com/communal-ai"
+                  className="inline-flex items-center gap-2 font-dm-sans text-blue-800 bg-[#f3f6fd] border border-[#b6c6e3] rounded-lg px-2 py-0.5 shadow-sm transition-all hover:bg-[#e6ebff] hover:shadow-md w-auto"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    boxShadow: "0 2px 8px 0 rgba(67, 97, 238, 0.08)",
+                    width: "fit-content",
+                    minWidth: 0,
+                    textDecoration: "none",
+                  }}
+                  onMouseOver={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+                  onMouseOut={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+                >
+                  Book a call
                 </a>
                 <br />
                 <span className="text-black font-dm-sans">
@@ -89,7 +102,7 @@ export default function LoginPage() {
               </Button>
             </div> */}
             {/* Google Sign in */}
-            <div className="mt-3 w-full max-w-[384px]">
+            <div className="mt-5 w-full max-w-[384px]">
               <Button
                 type="button"
                 variant="outline"
