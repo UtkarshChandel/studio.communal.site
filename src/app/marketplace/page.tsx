@@ -20,7 +20,7 @@ export default function MarketplacePage() {
                   Marketplace
                 </HeroHeading>
 
-                <div className="relative bg-gradient-to-br from-blue-100/60 via-white/60 to-green-100/60 border border-blue-200/40 shadow-xl rounded-3xl p-12 overflow-hidden">
+                <div className="relative p-12 overflow-hidden">
                   <div className="absolute inset-0 pointer-events-none">
                     <svg
                       className="w-full h-full"
