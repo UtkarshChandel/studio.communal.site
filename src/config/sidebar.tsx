@@ -31,13 +31,13 @@ export const SIDEBAR_ROUTES: SidebarRoute[] = [
   //   Icon: DocumentDuplicateIcon,
   //   activeMatch: "exact",
   // },
-  // {
-  //   id: "templates",
-  //   label: "Templates",
-  //   href: "/templates",
-  //   Icon: ClipboardDocumentIcon,
-  //   activeMatch: "exact",
-  // },
+  {
+    id: "templates",
+    label: "Templates",
+    href: "/templates",
+    Icon: ClipboardDocumentIcon,
+    activeMatch: "exact",
+  },
   // {
   //   id: "studio",
   //   label: "Studio",
@@ -46,13 +46,13 @@ export const SIDEBAR_ROUTES: SidebarRoute[] = [
   //   activeMatch: "exact",
   //   disabled: true,
   // },
-  // {
-  //   id: "marketplace",
-  //   label: "Marketplace",
-  //   href: "/marketplace",
-  //   Icon: ShoppingBagIcon,
-  //   activeMatch: "exact",
-  // },
+  {
+    id: "marketplace",
+    label: "Marketplace",
+    href: "/marketplace",
+    Icon: ShoppingBagIcon,
+    activeMatch: "exact",
+  },
   // {
   //   id: "settings",
   //   label: "Settings",

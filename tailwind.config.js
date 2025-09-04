@@ -13,6 +13,7 @@ module.exports = {
                 'geist': ['var(--font-geist-sans)', 'sans-serif'],
                 'geist-mono': ['var(--font-geist-mono)', 'monospace'],
                 'inter': ['var(--font-inter)', 'sans-serif'],
+                'garnet-script': ['Garnet', 'cursive'],
             },
         },
     },
