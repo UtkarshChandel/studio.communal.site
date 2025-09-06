@@ -108,21 +108,37 @@ export default function Button({
       "active:bg-[#fee4e2]",
     ],
     gradient: [
-      "bg-gradient-to-r",
-      "from-[#4361EE]",
-      "to-[#3A0CA3]",
       "text-white",
       "border-0",
       "shadow-[0px_1px_2px_0px_rgba(10,13,18,0.05)]",
-      "hover:from-[#3651dd]",
-      "hover:to-[#2d47cc]",
       "focus:ring-[#3A0CA3]/20",
-      "active:from-[#2d47cc]",
-      "active:to-[#3A0CA3]",
     ],
   };
 
   const widthClasses = fullWidth ? "w-full" : "w-auto";
+
+  // For gradient variant, we need to apply custom styles
+  const isGradient = variant === "gradient";
+
+  const gradientStyles = isGradient
+    ? {
+        background:
+          "linear-gradient(135.55deg, #3A0CA3 0%, rgba(67, 97, 238, 0.4) 131.05%)",
+      }
+    : {};
+
+  const gradientHoverStyles = isGradient
+    ? {
+        ":hover": {
+          background:
+            "linear-gradient(135.55deg, #2d0b8c 0%, rgba(53, 81, 221, 0.4) 131.05%)",
+        },
+        ":active": {
+          background:
+            "linear-gradient(135.55deg, #22076b 0%, rgba(45, 71, 204, 0.4) 131.05%)",
+        },
+      }
+    : {};
 
   const allClasses = [
     ...baseClasses,
@@ -186,6 +202,38 @@ export default function Button({
     <button
       type={type}
       className={allClasses}
+      style={{
+        ...gradientStyles,
+        ...(isGradient && !disabled && !loading
+          ? {
+              transition: "all 0.2s",
+            }
+          : {}),
+      }}
+      onMouseEnter={(e) => {
+        if (isGradient && !disabled && !loading) {
+          e.currentTarget.style.background =
+            "linear-gradient(135.55deg, #2d0b8c 0%, rgba(53, 81, 221, 0.4) 131.05%)";
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (isGradient && !disabled && !loading) {
+          e.currentTarget.style.background =
+            "linear-gradient(135.55deg, #3A0CA3 0%, rgba(67, 97, 238, 0.4) 131.05%)";
+        }
+      }}
+      onMouseDown={(e) => {
+        if (isGradient && !disabled && !loading) {
+          e.currentTarget.style.background =
+            "linear-gradient(135.55deg, #22076b 0%, rgba(45, 71, 204, 0.4) 131.05%)";
+        }
+      }}
+      onMouseUp={(e) => {
+        if (isGradient && !disabled && !loading) {
+          e.currentTarget.style.background =
+            "linear-gradient(135.55deg, #2d0b8c 0%, rgba(53, 81, 221, 0.4) 131.05%)";
+        }
+      }}
       onClick={handleClick}
       disabled={disabled || loading}
     >

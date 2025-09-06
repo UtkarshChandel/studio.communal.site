@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import AIMessage from "./AIMessage";
 import HumanMessage from "./HumanMessage";
 import ChatInputTextArea from "./ChatInputTextArea";
+import FileUploadModal from "./FileUploadModal";
 import { logger } from "@/lib/logger";
 
 export interface Message {
@@ -50,6 +51,7 @@ export default function ChatWindow({
   logger.component("ChatWindow", "render - messages:", messages);
   logger.component("ChatWindow", "render - generating:", generating);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFileUploadModalOpen, setIsFileUploadModalOpen] = useState(false);
   // const [isStreaming, setIsStreaming] = useState(false); // Unused
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -117,6 +119,20 @@ export default function ChatWindow({
 
   const handleCopyMessage = (messageId: string) => {
     console.log("Copied message:", messageId);
+  };
+
+  const handleOpenFileUpload = () => {
+    setIsFileUploadModalOpen(true);
+  };
+
+  const handleCloseFileUpload = () => {
+    setIsFileUploadModalOpen(false);
+  };
+
+  const handleFileUpload = (files: File[]) => {
+    logger.component("ChatWindow", "Files uploaded:", files);
+    // TODO: Implement actual file upload logic here
+    console.log("Files to upload:", files);
   };
 
   return (
@@ -216,8 +232,16 @@ export default function ChatWindow({
           generating={generating}
           onStop={onStop}
           disabled={disabled}
+          onFileUpload={handleOpenFileUpload}
         />
       </div>
+
+      {/* File Upload Modal */}
+      <FileUploadModal
+        isOpen={isFileUploadModalOpen}
+        onClose={handleCloseFileUpload}
+        onFileUpload={handleFileUpload}
+      />
     </div>
   );
 }
