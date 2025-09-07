@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import Button from "./Button";
 import CloseIcon from "./icons/CloseIcon";
 
@@ -10,6 +10,43 @@ interface FileUploadModalProps {
   onFileUpload?: (files: File[]) => void;
   className?: string;
 }
+
+// Component for previewing text files
+const TextFilePreview = ({ file }: { file: File }) => {
+  const [content, setContent] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      setContent(text || "");
+      setLoading(false);
+    };
+
+    reader.onerror = () => {
+      setContent("Error reading file");
+      setLoading(false);
+    };
+
+    reader.readAsText(file);
+  }, [file]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-[#535862] text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <pre className="font-mono text-sm text-[#181d27] whitespace-pre-wrap break-words">
+      {content}
+    </pre>
+  );
+};
 
 type ModalState = "empty" | "uploading" | "uploaded" | "describing";
 
@@ -299,6 +336,20 @@ export default function FileUploadModal({
     }
   };
 
+  // Function to get preview URL for a file
+  const getPreviewUrl = (file: File): string => {
+    return URL.createObjectURL(file);
+  };
+
+  // Function to check if we can show inline preview
+  const canShowInlinePreview = (file: File): boolean => {
+    return (
+      file.type === "application/pdf" ||
+      file.type === "text/plain" ||
+      file.name.toLowerCase().endsWith(".txt")
+    );
+  };
+
   const handleClose = () => {
     // Reset all state when closing
     setModalState("empty");
@@ -386,14 +437,59 @@ export default function FileUploadModal({
               </div>
 
               {/* Preview Area */}
-              <div className="bg-[#f9f9f9] border border-[#e9eaeb] rounded-xl p-4 min-h-[120px] flex items-center justify-center">
-                <Button
-                  variant="outline"
-                  onClick={handlePreview}
-                  className="min-w-[100px]"
-                >
-                  Preview
-                </Button>
+              <div className="bg-[#f9f9f9] border border-[#e9eaeb] rounded-xl overflow-hidden">
+                {uploadedFiles[currentFileIndex] &&
+                canShowInlinePreview(uploadedFiles[currentFileIndex].file) ? (
+                  <div className="relative">
+                    {/* Preview Header with External Preview Button */}
+                    <div className="flex items-center justify-between p-3 bg-white border-b border-[#e9eaeb]">
+                      <span className="font-inter text-[14px] text-[#535862]">
+                        Document Preview
+                      </span>
+                      <Button
+                        variant="outline"
+                        onClick={handlePreview}
+                        size="sm"
+                        className="text-xs"
+                      >
+                        Open in New Tab
+                      </Button>
+                    </div>
+
+                    {/* Preview Content */}
+                    <div className="min-h-[300px] max-h-[400px] overflow-hidden">
+                      {uploadedFiles[currentFileIndex].file.type ===
+                      "application/pdf" ? (
+                        // PDF Preview
+                        <iframe
+                          src={getPreviewUrl(
+                            uploadedFiles[currentFileIndex].file
+                          )}
+                          className="w-full h-[400px] border-0"
+                          title={`Preview of ${uploadedFiles[currentFileIndex].file.name}`}
+                        />
+                      ) : (
+                        // Text File Preview
+                        <div className="p-4 h-[300px] overflow-y-auto bg-white">
+                          <TextFilePreview
+                            file={uploadedFiles[currentFileIndex].file}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  // Fallback for non-previewable files
+                  <div className="p-4 min-h-[120px] flex items-center justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={handlePreview}
+                      className="min-w-[100px]"
+                    >
+                      Preview
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Description Field */}
