@@ -522,7 +522,7 @@ export default function FileUploadModal({
                 <textarea
                   value={tempDescription}
                   onChange={(e) => setTempDescription(e.target.value)}
-                  placeholder="Write a brief description to show on your profile..."
+                  placeholder="Write a brief description about the document, when should the clone use it?"
                   className="w-full min-h-[120px] p-3 border border-[#e9eaeb] rounded-lg resize-none 
                            font-inter text-[14px] leading-[20px] text-[#181d27] placeholder:text-[#535862]
                            focus:outline-none focus:ring-2 focus:ring-[#4361ee]/20 focus:border-[#4361ee]"
