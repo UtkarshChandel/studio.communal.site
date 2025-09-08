@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import Button from "./Button";
 import CloseIcon from "./icons/CloseIcon";
 
@@ -12,7 +18,7 @@ interface FileUploadModalProps {
 }
 
 // Component for previewing text files
-const TextFilePreview = ({ file }: { file: File }) => {
+const TextFilePreview = React.memo(({ file }: { file: File }) => {
   const [content, setContent] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -46,7 +52,9 @@ const TextFilePreview = ({ file }: { file: File }) => {
       {content}
     </pre>
   );
-};
+});
+
+TextFilePreview.displayName = "TextFilePreview";
 
 type ModalState = "empty" | "uploading" | "uploaded" | "describing";
 
@@ -155,6 +163,28 @@ export default function FileUploadModal({
   const [tempTags, setTempTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Memoize the current file to prevent unnecessary re-renders
+  const currentFile = useMemo(() => {
+    return uploadedFiles[currentFileIndex]?.file || null;
+  }, [uploadedFiles, currentFileIndex]);
+
+  // Memoize the preview URL to prevent re-creation on every render
+  const currentPreviewUrl = useMemo(() => {
+    if (modalState === "describing" && currentFile) {
+      return URL.createObjectURL(currentFile);
+    }
+    return null;
+  }, [modalState, currentFile]);
+
+  // Cleanup preview URL when component unmounts or file changes
+  useEffect(() => {
+    return () => {
+      if (currentPreviewUrl) {
+        URL.revokeObjectURL(currentPreviewUrl);
+      }
+    };
+  }, [currentPreviewUrl]);
 
   // Function to truncate file names
   const truncateFileName = (
@@ -326,10 +356,9 @@ export default function FileUploadModal({
   };
 
   const handlePreview = () => {
-    const currentFile = uploadedFiles[currentFileIndex];
     if (currentFile) {
       // Create a URL for the file to preview
-      const fileUrl = URL.createObjectURL(currentFile.file);
+      const fileUrl = URL.createObjectURL(currentFile);
       window.open(fileUrl, "_blank");
       // Clean up the URL after a delay to prevent memory leaks
       setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
@@ -388,10 +417,10 @@ export default function FileUploadModal({
 
       {/* Modal */}
       <div
-        className={`relative bg-white rounded-[20px] shadow-[0px_20px_24px_-4px_rgba(10,13,18,0.1),0px_8px_8px_-4px_rgba(10,13,18,0.04)] w-full max-w-md lg:max-w-lg xl:max-w-xl font-inter ${className}`}
+        className={`relative bg-white rounded-[20px] shadow-[0px_20px_24px_-4px_rgba(10,13,18,0.1),0px_8px_8px_-4px_rgba(10,13,18,0.04)] w-full max-w-md lg:max-w-lg xl:max-w-xl max-h-[90vh] font-inter ${className} flex flex-col`}
       >
         {/* Header */}
-        <div className="relative bg-white rounded-t-[20px] px-6 pt-6">
+        <div className="relative bg-white rounded-t-[20px] px-6 pt-6 flex-shrink-0">
           <div className="flex flex-col gap-1 mb-5">
             <h2 className="font-inter font-semibold text-[18px] leading-[28px] text-[#181d27]">
               Upload and attach files
@@ -410,8 +439,8 @@ export default function FileUploadModal({
           </button>
         </div>
 
-        {/* Content Area */}
-        <div className="px-6">
+        {/* Content Area - Scrollable */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0 scrollable-content">
           {modalState === "describing" ? (
             <div className="flex flex-col gap-5">
               {/* File Header */}
@@ -425,10 +454,7 @@ export default function FileUploadModal({
                 <div className="flex-1">
                   <h3 className="font-inter font-semibold text-[16px] leading-[24px] text-[#181d27]">
                     File {currentFileIndex + 1}:{" "}
-                    {truncateFileName(
-                      uploadedFiles[currentFileIndex]?.file.name || "",
-                      45
-                    )}
+                    {truncateFileName(currentFile?.name || "", 45)}
                   </h3>
                   <p className="font-inter font-normal text-[14px] leading-[20px] text-[#535862]">
                     Add Tags and Description of the file
@@ -438,8 +464,7 @@ export default function FileUploadModal({
 
               {/* Preview Area */}
               <div className="bg-[#f9f9f9] border border-[#e9eaeb] rounded-xl overflow-hidden">
-                {uploadedFiles[currentFileIndex] &&
-                canShowInlinePreview(uploadedFiles[currentFileIndex].file) ? (
+                {currentFile && canShowInlinePreview(currentFile) ? (
                   <div className="relative">
                     {/* Preview Header with External Preview Button */}
                     <div className="flex items-center justify-between p-3 bg-white border-b border-[#e9eaeb]">
@@ -457,23 +482,20 @@ export default function FileUploadModal({
                     </div>
 
                     {/* Preview Content */}
-                    <div className="min-h-[300px] max-h-[400px] overflow-hidden">
-                      {uploadedFiles[currentFileIndex].file.type ===
-                      "application/pdf" ? (
+                    <div className="min-h-[250px] max-h-[300px] overflow-hidden">
+                      {currentFile?.type === "application/pdf" ? (
                         // PDF Preview
                         <iframe
-                          src={getPreviewUrl(
-                            uploadedFiles[currentFileIndex].file
-                          )}
-                          className="w-full h-[400px] border-0"
-                          title={`Preview of ${uploadedFiles[currentFileIndex].file.name}`}
+                          src={currentPreviewUrl || ""}
+                          className="w-full h-[300px] border-0"
+                          title={`Preview of ${currentFile.name}`}
                         />
                       ) : (
                         // Text File Preview
-                        <div className="p-4 h-[300px] overflow-y-auto bg-white">
-                          <TextFilePreview
-                            file={uploadedFiles[currentFileIndex].file}
-                          />
+                        <div className="p-4 h-[250px] overflow-y-auto bg-white">
+                          {currentFile && (
+                            <TextFilePreview file={currentFile} />
+                          )}
                         </div>
                       )}
                     </div>
@@ -688,8 +710,8 @@ export default function FileUploadModal({
           )}
         </div>
 
-        {/* Actions */}
-        <div className="pt-8 pb-6 px-6">
+        {/* Actions - Fixed at bottom */}
+        <div className="flex-shrink-0 pt-8 pb-6 px-6 bg-white rounded-b-[20px]">
           <div className="flex gap-3">
             <Button
               variant="outline"
@@ -705,7 +727,11 @@ export default function FileUploadModal({
               variant="gradient"
               fullWidth
               onClick={handleNext}
-              disabled={modalState === "empty" || modalState === "uploading"}
+              disabled={
+                modalState === "empty" ||
+                modalState === "uploading" ||
+                (modalState === "describing" && !tempDescription.trim())
+              }
               className="flex-1"
             >
               {modalState === "describing"
@@ -749,6 +775,28 @@ export default function FileUploadModal({
         }
 
         .scrollable-file-list::-webkit-scrollbar-thumb:hover {
+          background-color: #94a3b8;
+        }
+
+        .scrollable-content {
+          scrollbar-width: thin;
+          scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .scrollable-content::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb {
+          background-color: #cbd5e1;
+          border-radius: 3px;
+        }
+
+        .scrollable-content::-webkit-scrollbar-thumb:hover {
           background-color: #94a3b8;
         }
       `}</style>
