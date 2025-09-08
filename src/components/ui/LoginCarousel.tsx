@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface CarouselItem {
   type: "title" | "role";
@@ -39,6 +39,11 @@ export default function LoginCarousel({
   buttonHref,
 }: LoginCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const touchDeltaXRef = useRef<number>(0);
+  const isSwipingRef = useRef<boolean>(false);
+  const SWIPE_THRESHOLD = 50;
 
   const carouselData: CarouselItem[] = [
     {
@@ -108,14 +113,63 @@ export default function LoginCarousel({
 
   return (
     <div
-      className={`hidden md:block absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 
-        w-[350px] md:w-[380px] lg:w-[420px] xl:w-[450px] 
-        h-[380px] md:h-[400px] lg:h-[420px] xl:h-[440px] ${className}`}
+      className={`block relative mx-auto lg:absolute lg:top-1/2 lg:left-1/2 lg:transform lg:-translate-x-1/2 lg:-translate-y-1/2 
+        w-full max-w-[360px] sm:max-w-[380px] lg:max-w-[420px] xl:max-w-[450px] 
+        lg:h-[420px] xl:h-[440px] touch-pan-y ${className}`}
+      onTouchStart={(e) => {
+        const t = e.touches[0];
+        touchStartXRef.current = t.clientX;
+        touchStartYRef.current = t.clientY;
+        touchDeltaXRef.current = 0;
+        isSwipingRef.current = false;
+      }}
+      onTouchMove={(e) => {
+        if (
+          touchStartXRef.current === null ||
+          touchStartYRef.current === null
+        ) {
+          return;
+        }
+        const t = e.touches[0];
+        const dx = t.clientX - touchStartXRef.current;
+        const dy = t.clientY - touchStartYRef.current;
+        if (!isSwipingRef.current) {
+          if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) {
+            isSwipingRef.current = true;
+          } else {
+            return;
+          }
+        }
+        // While actively swiping horizontally, prevent vertical scroll from hijacking the gesture
+        e.preventDefault();
+        touchDeltaXRef.current = dx;
+      }}
+      onTouchEnd={() => {
+        if (!isSwipingRef.current) return;
+        const dx = touchDeltaXRef.current;
+        if (Math.abs(dx) > SWIPE_THRESHOLD) {
+          if (dx < 0) {
+            // swipe left -> next
+            setCurrentIndex((prev) =>
+              prev === carouselData.length - 1 ? 0 : prev + 1
+            );
+          } else {
+            // swipe right -> previous
+            setCurrentIndex((prev) =>
+              prev === 0 ? carouselData.length - 1 : prev - 1
+            );
+          }
+        }
+        touchStartXRef.current = null;
+        touchStartYRef.current = null;
+        touchDeltaXRef.current = 0;
+        isSwipingRef.current = false;
+      }}
     >
       {/* Left Arrow */}
       <button
         onClick={goToPrevious}
-        className="absolute left-[-50px] top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg border border-white/20 flex items-center justify-center transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+        className="hidden lg:flex absolute left-[-50px] top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg border border-white/20 items-center justify-center transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
         aria-label="Previous slide"
       >
         <svg
@@ -136,7 +190,7 @@ export default function LoginCarousel({
       {/* Right Arrow */}
       <button
         onClick={goToNext}
-        className="absolute right-[-50px] top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg border border-white/20 flex items-center justify-center transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
+        className="hidden lg:flex absolute right-[-50px] top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg border border-white/20 items-center justify-center transition-all duration-200 hover:scale-110 z-10 cursor-pointer"
         aria-label="Next slide"
       >
         <svg
@@ -227,8 +281,8 @@ export default function LoginCarousel({
         </div>
       </div>
 
-      {/* Subtle gradient overlay for better text contrast */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent rounded-2xl pointer-events-none -z-10"></div>
+      {/* Subtle gradient overlay for better text contrast (desktop only) */}
+      <div className="hidden lg:block absolute inset-0 bg-gradient-to-t from-black/5 to-transparent rounded-2xl pointer-events-none -z-10"></div>
     </div>
   );
 }

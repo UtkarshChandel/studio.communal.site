@@ -147,6 +147,23 @@ export default function LoginPage() {
             </div> */}
           </form>
         </div>
+
+        {/* Mobile-only carousel section */}
+        <div className="block lg:hidden px-6 mt-6">
+          <div className="relative rounded-2xl overflow-hidden">
+            <img
+              src="/abstract.png"
+              alt="Abstract artwork"
+              className="absolute inset-0 h-full w-full object-cover select-none pointer-events-none"
+            />
+            <div className="relative py-6">
+              <LoginCarousel
+                buttonText="Book a Call"
+                buttonHref="https://calendly.com/communal-ai"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Right section: artwork */}
