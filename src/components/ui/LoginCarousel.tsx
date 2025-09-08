@@ -48,7 +48,6 @@ export default function LoginCarousel({
         "Build your AI Clone to scale your expertise, stay responsive, and grow stress-free..",
       quote:
         "Consultants & Consulting Firms\nVCs/Founders/Operators\nEducators\nSocial Influencers",
-      icon: "🤖",
     },
     {
       type: "role",
