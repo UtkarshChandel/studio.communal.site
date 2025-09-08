@@ -3,6 +3,7 @@
 
 // import Link from "next/link"; // Unused
 import Button from "@/components/ui/Button";
+import LoginCarousel from "@/components/ui/LoginCarousel";
 import { useLogin } from "@/hooks/useLogin";
 import { useEffect, useRef } from "react";
 
@@ -80,8 +81,16 @@ export default function LoginPage() {
                     minWidth: 0,
                     textDecoration: "none",
                   }}
-                  onMouseOver={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
-                  onMouseOut={e => { (e.currentTarget as HTMLAnchorElement).style.textDecoration = "none"; }}
+                  onMouseOver={(e) => {
+                    (
+                      e.currentTarget as HTMLAnchorElement
+                    ).style.textDecoration = "none";
+                  }}
+                  onMouseOut={(e) => {
+                    (
+                      e.currentTarget as HTMLAnchorElement
+                    ).style.textDecoration = "none";
+                  }}
                 >
                   Book a call
                 </a>
@@ -147,6 +156,11 @@ export default function LoginPage() {
             src="/abstract.png"
             alt="Abstract artwork"
             className="absolute inset-0 h-full w-full object-cover object-left-top xl:object-contain xl:object-right select-none pointer-events-none"
+          />
+          {/* Carousel overlay */}
+          <LoginCarousel
+            buttonText="Book a Call"
+            buttonHref="https://calendly.com/communal-ai"
           />
         </div>
       </div>
