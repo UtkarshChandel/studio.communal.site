@@ -29,6 +29,7 @@ interface ChatWindowProps {
   scrollToBottomSignal?: number;
   showEmptyPlaceholder?: boolean;
   disabled?: boolean;
+  sessionId?: string;
 }
 
 export default function ChatWindow({
@@ -46,6 +47,7 @@ export default function ChatWindow({
   scrollToBottomSignal,
   showEmptyPlaceholder = true,
   disabled = false,
+  sessionId,
 }: ChatWindowProps) {
   logger.component("ChatWindow", "render - messages count:", messages.length);
   logger.component("ChatWindow", "render - messages:", messages);
@@ -102,7 +104,7 @@ export default function ChatWindow({
     if (onSendMessage) {
       setIsLoading(true);
       try {
-        await onSendMessage(message);
+        onSendMessage(message);
       } finally {
         setIsLoading(false);
       }
@@ -241,6 +243,7 @@ export default function ChatWindow({
         isOpen={isFileUploadModalOpen}
         onClose={handleCloseFileUpload}
         onFileUpload={handleFileUpload}
+        sessionId={sessionId}
       />
     </div>
   );

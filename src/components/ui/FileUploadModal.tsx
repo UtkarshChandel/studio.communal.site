@@ -9,11 +9,18 @@ import React, {
 } from "react";
 import Button from "./Button";
 import CloseIcon from "./icons/CloseIcon";
+import { useFileUpload } from "@/hooks/useFileUpload";
+import { useDocumentMetadata } from "@/hooks/useDocumentMetadata";
+import { FileUploadStatus } from "@/lib/knowledge-base";
+import { updateDocumentMetadata, ingestDocuments } from "@/lib/knowledge-base-api";
+import { useSessionStore } from "@/store/useSessionStore";
+import { useUploadHistoryStore } from "@/store/useUploadHistoryStore";
 
 interface FileUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFileUpload?: (files: File[]) => void;
+  sessionId?: string; // Optional, will use active session if not provided
   className?: string;
 }
 
@@ -56,7 +63,7 @@ const TextFilePreview = React.memo(({ file }: { file: File }) => {
 
 TextFilePreview.displayName = "TextFilePreview";
 
-type ModalState = "empty" | "uploading" | "uploaded" | "describing";
+type ModalState = "empty" | "uploading" | "uploaded" | "describing" | "submitting-metadata" | "ingesting";
 
 interface UploadedFile {
   id: string;
@@ -127,19 +134,19 @@ const CheckIcon = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
-// Trash/Delete icon component for removing uploads
-const TrashIcon = ({ className = "" }: { className?: string }) => (
+// Back arrow icon component
+const BackArrowIcon = ({ className = "" }: { className?: string }) => (
   <svg
     className={className}
-    width="18"
+    width="20"
     height="20"
-    viewBox="0 0 18 20"
+    viewBox="0 0 20 20"
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
-      d="M12.3333 5.00033V4.33366C12.3333 3.40024 12.3333 2.93353 12.1517 2.57701C11.9919 2.2634 11.7369 2.00844 11.4233 1.84865C11.0668 1.66699 10.6001 1.66699 9.66667 1.66699H8.33333C7.39991 1.66699 6.9332 1.66699 6.57668 1.84865C6.26308 2.00844 6.00811 2.2634 5.84832 2.57701C5.66667 2.93353 5.66667 3.40024 5.66667 4.33366V5.00033M7.33333 9.58366V13.7503M10.6667 9.58366V13.7503M1.5 5.00033H16.5M14.8333 5.00033V14.3337C14.8333 15.7338 14.8333 16.4339 14.5608 16.9686C14.3212 17.439 13.9387 17.8215 13.4683 18.0612C12.9335 18.3337 12.2335 18.3337 10.8333 18.3337H7.16667C5.76654 18.3337 5.06647 18.3337 4.53169 18.0612C4.06129 17.8215 3.67883 17.439 3.43915 16.9686C3.16667 16.4339 3.16667 15.7338 3.16667 14.3337V5.00033"
-      stroke="#717680"
+      d="M12.5 15L7.5 10L12.5 5"
+      stroke="#535862"
       strokeWidth="1.66667"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -151,18 +158,36 @@ export default function FileUploadModal({
   isOpen,
   onClose,
   onFileUpload,
+  sessionId: propSessionId,
   className = "",
 }: FileUploadModalProps) {
   const [modalState, setModalState] = useState<ModalState>("empty");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadingFileIds, setUploadingFileIds] = useState<string[]>([]);
   const [currentFileIndex, setCurrentFileIndex] = useState(0);
   const [tempDescription, setTempDescription] = useState("");
   const [tempTags, setTempTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
+  const [successfullyTaggedIds, setSuccessfullyTaggedIds] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Get active session from store if sessionId not provided
+  const activeSessionId = useSessionStore(state => state.activeSessionId);
+  const sessionId = propSessionId || activeSessionId;
+
+  // Use the file upload hook
+  const { state: uploadState, uploadFiles } = useFileUpload();
+
+  // Use the document metadata hook
+  const { state: metadataState, updateDocumentsMetadata } = useDocumentMetadata();
+
+  // Get upload history from store
+  const {
+    getFileHistory,
+    addTaggedDocument,
+    isDocumentTagged,
+    getUntaggedFiles,
+  } = useUploadHistoryStore();
 
   // Memoize the current file to prevent unnecessary re-renders
   const currentFile = useMemo(() => {
@@ -229,7 +254,7 @@ export default function FileUploadModal({
   };
 
   const handleFileSelect = useCallback(
-    (files: FileList | File[]) => {
+    async (files: FileList | File[]) => {
       const fileArray = Array.from(files);
       const validFiles = fileArray.filter(validateFile);
 
@@ -242,38 +267,45 @@ export default function FileUploadModal({
         alert("Some files were skipped. Only PDF and TXT files are allowed.");
       }
 
-      // Create uploaded files immediately and start upload process
-      const newUploadedFiles: UploadedFile[] = validFiles.map((file) => ({
+      // Filter out files that have already been tagged
+      const untaggedFiles = validFiles.filter(file => !isDocumentTagged(file.name));
+
+      if (untaggedFiles.length === 0) {
+        alert("All selected files have already been processed.");
+        return;
+      }
+
+      if (untaggedFiles.length !== validFiles.length) {
+        alert(`${validFiles.length - untaggedFiles.length} file(s) were already processed and will be skipped.`);
+      }
+
+      // Check if we have a session ID
+      if (!sessionId) {
+        alert("No active session. Please start a session first.");
+        return;
+      }
+
+      // Create uploaded files for UI tracking
+      const newUploadedFiles: UploadedFile[] = untaggedFiles.map((file) => ({
         id: Math.random().toString(36).substring(7),
         file,
         description: "",
         tags: [],
       }));
 
-      const newFileIds = newUploadedFiles.map((f) => f.id);
-
       // Add new files to the TOP of the existing list
       setUploadedFiles((prev) => [...newUploadedFiles, ...prev]);
-      setUploadingFileIds(newFileIds);
       setModalState("uploading");
-      setUploadProgress(0);
 
-      // Simulate progress for the new files
-      const interval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            setUploadingFileIds([]);
-            setModalState("uploaded");
-            return 100;
-          }
-          return prev + 10;
-        });
-      }, 200);
+      // Start the actual upload
+      await uploadFiles(untaggedFiles, sessionId);
 
-      onFileUpload?.(validFiles);
+      // Modal state will be updated after upload completes
+      setModalState("uploaded");
+
+      onFileUpload?.(untaggedFiles);
     },
-    [onFileUpload]
+    [onFileUpload, sessionId, uploadFiles, isDocumentTagged]
   );
 
   const handleDrop = useCallback(
@@ -313,15 +345,87 @@ export default function FileUploadModal({
     fileInputRef.current?.click();
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (modalState === "uploaded") {
+      // Filter only successfully uploaded files that haven't been tagged yet
+      const successfulFiles = uploadedFiles.filter((file) => {
+        const status = getFileStatus(file.file.name);
+        return status === "completed" && !isDocumentTagged(file.file.name);
+      });
+
+      if (successfulFiles.length === 0) {
+        // No successful files to add metadata to - close the modal
+        handleClose();
+        return;
+      }
+
+      // Store the successful files for navigation
+      setUploadedFiles(successfulFiles);
+      setSuccessfullyTaggedIds(new Set()); // Reset tagged IDs for this session
+
       // Start describing files
       setCurrentFileIndex(0);
-      setTempDescription(uploadedFiles[0]?.description || "");
-      setTempTags(uploadedFiles[0]?.tags || []);
+      setTempDescription(successfulFiles[0]?.description || "");
+      setTempTags(successfulFiles[0]?.tags || []);
       setModalState("describing");
     } else if (modalState === "describing") {
-      // Save current file's description and tags
+      // Validate that description and at least one tag are provided
+      if (!tempDescription.trim()) {
+        alert("Please provide a description for the document.");
+        return;
+      }
+
+      if (tempTags.length === 0) {
+        alert("Please add at least one tag for the document.");
+        return;
+      }
+
+      if (!sessionId) {
+        alert("No active session. Please log in and try again.");
+        return;
+      }
+
+      // Get current file's document ID
+      const currentFileData = uploadedFiles[currentFileIndex];
+      const fileStatus = uploadState.fileStatuses[currentFileData.file.name];
+      const history = getFileHistory(currentFileData.file.name);
+      const documentId = fileStatus?.documentId || history?.documentId;
+
+      if (!documentId) {
+        console.warn(`No document ID found for ${currentFileData.file.name}`);
+      } else {
+        // Only submit metadata if not already submitted
+        if (!successfullyTaggedIds.has(documentId)) {
+          // Update metadata for current file immediately
+          try {
+            await updateDocumentMetadata(
+              documentId,
+              {
+                description: tempDescription,
+                tags: tempTags,
+              },
+              sessionId
+            );
+
+            // Track successfully tagged document (Set automatically prevents duplicates)
+            setSuccessfullyTaggedIds(prev => {
+              const newSet = new Set(prev);
+              newSet.add(documentId);
+              return newSet;
+            });
+            addTaggedDocument(currentFileData.file.name);
+
+            console.log(`Metadata updated for ${currentFileData.file.name}`);
+          } catch (error) {
+            console.error(`Failed to update metadata for ${currentFileData.file.name}:`, error);
+            // Continue to next file even if this one failed
+          }
+        } else {
+          console.log(`Metadata already submitted for ${currentFileData.file.name}, skipping API call`);
+        }
+      }
+
+      // Save current file's description and tags locally
       const updatedFiles = [...uploadedFiles];
       updatedFiles[currentFileIndex] = {
         ...updatedFiles[currentFileIndex],
@@ -330,17 +434,149 @@ export default function FileUploadModal({
       };
       setUploadedFiles(updatedFiles);
 
-      // Move to next file or complete
+      // Check if there are more files to process
       if (currentFileIndex < uploadedFiles.length - 1) {
+        // Move to next file
         const nextIndex = currentFileIndex + 1;
         setCurrentFileIndex(nextIndex);
         setTempDescription(updatedFiles[nextIndex]?.description || "");
         setTempTags(updatedFiles[nextIndex]?.tags || []);
       } else {
-        // All files described, submit
-        console.log("All files completed with descriptions:", updatedFiles);
-        onClose();
+        // This is the last file - ensure ALL files with valid metadata are submitted
+        console.log("Processing final submit - checking all files for pending metadata submissions");
+
+        // Create a local copy of successfully tagged IDs to track during batch submission
+        // Include the current file's document ID if it was just successfully submitted
+        const finalTaggedIds = new Set(successfullyTaggedIds);
+        if (documentId && !finalTaggedIds.has(documentId)) {
+          // The current file was just submitted successfully above, add it to the set
+          finalTaggedIds.add(documentId);
+        }
+
+        // First, submit metadata for ALL files that haven't been submitted yet
+        for (let i = 0; i < updatedFiles.length; i++) {
+          const file = updatedFiles[i];
+          // Skip current file as it was just processed above
+          if (i === currentFileIndex) continue;
+
+          // Check if this file has valid metadata
+          if (file.description?.trim() && file.tags?.length > 0) {
+            const fileStatus = uploadState.fileStatuses[file.file.name];
+            const history = getFileHistory(file.file.name);
+            const docId = fileStatus?.documentId || history?.documentId;
+
+            // Submit if we have a document ID and it hasn't been submitted yet
+            if (docId && !finalTaggedIds.has(docId)) {
+              try {
+                console.log(`Submitting pending metadata for ${file.file.name}`);
+                await updateDocumentMetadata(
+                  docId,
+                  {
+                    description: file.description,
+                    tags: file.tags
+                  },
+                  sessionId
+                );
+
+                // Track this document as successfully tagged
+                finalTaggedIds.add(docId);
+                addTaggedDocument(file.file.name);
+
+                console.log(`Successfully submitted metadata for ${file.file.name}`);
+              } catch (error) {
+                console.error(`Failed to submit metadata for ${file.file.name}:`, error);
+                // Continue processing other files even if one fails
+              }
+            }
+          }
+        }
+
+        // Update the state with all tagged IDs
+        setSuccessfullyTaggedIds(finalTaggedIds);
+
+        // Now trigger ingestion with ALL successfully tagged documents
+        const docsToIngest = Array.from(finalTaggedIds);
+        console.log(`Triggering ingestion for ${docsToIngest.length} documents:`, docsToIngest);
+
+        if (docsToIngest.length > 0) {
+          try {
+            // Set ingesting state
+            setModalState("ingesting");
+
+            // Trigger ingestion for all tagged documents
+            await ingestDocuments(docsToIngest, sessionId);
+
+            console.log(`Ingestion triggered successfully for ${docsToIngest.length} documents`);
+
+            // Brief delay to show success before closing
+            setTimeout(() => {
+              handleClose();  // Use handleClose to properly reset all states
+            }, 1000);
+          } catch (error) {
+            console.error("Failed to trigger ingestion:", error);
+            // Still close modal as metadata was saved
+            alert("Documents saved but ingestion failed. They will be processed later.");
+            handleClose();  // Use handleClose to properly reset all states
+          }
+        } else {
+          console.warn("No documents to ingest - closing modal");
+          handleClose();  // Use handleClose to properly reset all states
+        }
       }
+    }
+  };
+
+  const handleBack = async () => {
+    if (modalState === "describing" && currentFileIndex > 0) {
+      // First, submit current file's metadata if valid
+      if (tempDescription.trim() && tempTags.length > 0 && sessionId) {
+        const currentFileData = uploadedFiles[currentFileIndex];
+        const fileStatus = uploadState.fileStatuses[currentFileData.file.name];
+        const history = getFileHistory(currentFileData.file.name);
+        const documentId = fileStatus?.documentId || history?.documentId;
+
+        // Only submit if we have a document ID and it hasn't been submitted yet
+        if (documentId && !successfullyTaggedIds.has(documentId)) {
+          try {
+            await updateDocumentMetadata(
+              documentId,
+              {
+                description: tempDescription,
+                tags: tempTags,
+              },
+              sessionId
+            );
+
+            // Track successfully tagged document
+            setSuccessfullyTaggedIds(prev => {
+              const newSet = new Set(prev);
+              newSet.add(documentId);
+              return newSet;
+            });
+            addTaggedDocument(currentFileData.file.name);
+
+            console.log(`Metadata updated for ${currentFileData.file.name} (via back navigation)`);
+          } catch (error) {
+            console.error(`Failed to update metadata for ${currentFileData.file.name}:`, error);
+            // Still allow navigation even if submission failed
+          }
+        }
+      }
+
+      // Save current file's description and tags locally
+      const updatedFiles = [...uploadedFiles];
+      updatedFiles[currentFileIndex] = {
+        ...updatedFiles[currentFileIndex],
+        description: tempDescription,
+        tags: tempTags,
+      };
+      setUploadedFiles(updatedFiles);
+
+      // Move to previous file
+      const prevIndex = currentFileIndex - 1;
+      setCurrentFileIndex(prevIndex);
+      setTempDescription(updatedFiles[prevIndex]?.description || "");
+      setTempTags(updatedFiles[prevIndex]?.tags || []);
     }
   };
 
@@ -365,11 +601,6 @@ export default function FileUploadModal({
     }
   };
 
-  // Function to get preview URL for a file
-  const getPreviewUrl = (file: File): string => {
-    return URL.createObjectURL(file);
-  };
-
   // Function to check if we can show inline preview
   const canShowInlinePreview = (file: File): boolean => {
     return (
@@ -379,17 +610,74 @@ export default function FileUploadModal({
     );
   };
 
+  // Helper functions to get file status and progress from upload state or history
+  const getFileProgress = (fileName: string): number => {
+    // First check current upload state
+    const fileStatus = uploadState.fileStatuses[fileName];
+    if (fileStatus) {
+      return fileStatus.progress;
+    }
+
+    // Then check history
+    const history = getFileHistory(fileName);
+    return history?.progress || 0;
+  };
+
+  const getFileStatus = (fileName: string): FileUploadStatus | null => {
+    // First check current upload state
+    const fileStatus = uploadState.fileStatuses[fileName];
+    if (fileStatus) {
+      return fileStatus.status;
+    }
+
+    // Then check history
+    const history = getFileHistory(fileName);
+    return history?.status || null;
+  };
+
+  const getFileError = (fileName: string): string | undefined => {
+    // Check upload state for current errors
+    const fileStatus = uploadState.fileStatuses[fileName];
+    if (fileStatus?.error) {
+      return fileStatus.error;
+    }
+
+    // Check history for stored errors
+    const history = getFileHistory(fileName);
+    return history?.error;
+  };
+
+  const getFileDuplicateInfo = (fileName: string): { existingName?: string; existingId?: string } | null => {
+    const fileStatus = uploadState.fileStatuses[fileName];
+    const history = getFileHistory(fileName);
+
+    if (fileStatus?.status === "duplicate" || history?.status === "duplicate") {
+      return {
+        existingName: fileStatus?.existingDocumentName || history?.existingDocumentName,
+        existingId: fileStatus?.existingDocumentId || history?.existingDocumentId
+      };
+    }
+    return null;
+  };
+
+  // Check if there are any successfully uploaded files that can be tagged
+  const hasSuccessfulUploads = (): boolean => {
+    return uploadedFiles.some((file) => {
+      const status = getFileStatus(file.file.name);
+      return status === "completed" && !isDocumentTagged(file.file.name);
+    });
+  };
+
   const handleClose = () => {
-    // Reset all state when closing
+    // Reset all modal state when closing
     setModalState("empty");
-    setUploadedFiles([]);
-    setUploadProgress(0);
-    setUploadingFileIds([]);
     setCurrentFileIndex(0);
     setTempDescription("");
     setTempTags([]);
     setNewTag("");
     setIsDragOver(false);
+    setUploadedFiles([]); // Clear uploaded files to start fresh next time
+    setSuccessfullyTaggedIds(new Set()); // Clear tagged IDs
     onClose();
   };
 
@@ -409,10 +697,9 @@ export default function FileUploadModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
+      {/* Backdrop - No click handler to prevent accidental closure */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={handleClose}
       />
 
       {/* Modal */}
@@ -441,10 +728,44 @@ export default function FileUploadModal({
 
         {/* Content Area - Scrollable */}
         <div className="flex-1 overflow-y-auto px-6 py-4 min-h-0 scrollable-content">
-          {modalState === "describing" ? (
+          {modalState === "submitting-metadata" ? (
+            // Show loading state while submitting metadata
+            <div className="flex flex-col items-center justify-center gap-4 py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4361ee]"></div>
+              <p className="font-inter font-medium text-[16px] text-[#181d27]">
+                Saving metadata...
+              </p>
+              {metadataState.progress > 0 && (
+                <p className="font-inter text-[14px] text-[#535862]">
+                  {Math.round(metadataState.progress)}% complete
+                </p>
+              )}
+            </div>
+          ) : modalState === "ingesting" ? (
+            // Show loading state while ingesting documents
+            <div className="flex flex-col items-center justify-center gap-4 py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#4361ee]"></div>
+              <p className="font-inter font-medium text-[16px] text-[#181d27]">
+                Processing documents...
+              </p>
+              <p className="font-inter text-[14px] text-[#535862]">
+                Your documents are being prepared for use
+              </p>
+            </div>
+          ) : modalState === "describing" ? (
             <div className="flex flex-col gap-5">
-              {/* File Header */}
+              {/* File Header with Back Navigation */}
               <div className="flex items-center gap-3">
+                {/* Back button - only show if not on first file */}
+                {currentFileIndex > 0 && (
+                  <button
+                    onClick={handleBack}
+                    className="shrink-0 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                    title="Go to previous file"
+                  >
+                    <BackArrowIcon className="w-5 h-5" />
+                  </button>
+                )}
                 <div className="shrink-0 w-12 h-12 relative">
                   <div className="absolute bg-[#f4ebff] left-[-2px] top-[-2px] w-14 h-14 rounded-[28px] flex items-center justify-center">
                     <div className="absolute border-4 border-[#f9f5ff] border-solid inset-[-2px] pointer-events-none rounded-[30px]" />
@@ -453,11 +774,11 @@ export default function FileUploadModal({
                 </div>
                 <div className="flex-1">
                   <h3 className="font-inter font-semibold text-[16px] leading-[24px] text-[#181d27]">
-                    File {currentFileIndex + 1}:{" "}
-                    {truncateFileName(currentFile?.name || "", 45)}
+                    File {currentFileIndex + 1} of {uploadedFiles.length}:{" "}
+                    {truncateFileName(currentFile?.name || "", 35)}
                   </h3>
                   <p className="font-inter font-normal text-[14px] leading-[20px] text-[#535862]">
-                    Add Tags and Description of the file
+                    Add tags and description (both required)
                   </p>
                 </div>
               </div>
@@ -517,23 +838,31 @@ export default function FileUploadModal({
               {/* Description Field */}
               <div className="flex flex-col gap-2">
                 <label className="font-inter font-medium text-[14px] leading-[20px] text-[#181d27]">
-                  Description*
+                  Description <span className="text-red-500">*</span> <span className="font-normal text-[#535862]">(max 1000 characters)</span>
                 </label>
                 <textarea
                   value={tempDescription}
-                  onChange={(e) => setTempDescription(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 1000) {
+                      setTempDescription(e.target.value);
+                    }
+                  }}
                   placeholder="Write a brief description about the document, when should the clone use it?"
-                  className="w-full min-h-[120px] p-3 border border-[#e9eaeb] rounded-lg resize-none 
+                  className="w-full min-h-[120px] p-3 border border-[#e9eaeb] rounded-lg resize-none
                            font-inter text-[14px] leading-[20px] text-[#181d27] placeholder:text-[#535862]
                            focus:outline-none focus:ring-2 focus:ring-[#4361ee]/20 focus:border-[#4361ee]"
                   rows={5}
+                  maxLength={1000}
                 />
+                <small className="text-[12px] text-[#535862]">
+                  {tempDescription.length}/1000 characters
+                </small>
               </div>
 
               {/* Tags Field */}
               <div className="flex flex-col gap-2">
                 <label className="font-inter font-medium text-[14px] leading-[20px] text-[#181d27]">
-                  Tags
+                  Tags <span className="text-red-500">*</span> <span className="font-normal text-[#535862]">(at least one required)</span>
                 </label>
                 <div className="flex flex-wrap gap-2 mb-2">
                   {tempTags.map((tag, index) => (
@@ -625,6 +954,8 @@ export default function FileUploadModal({
                 </div>
               </div>
 
+              {/* Removed generic error notifications - errors now shown inline with each file */}
+
               {/* File Queue - Show when files are selected/uploaded */}
               {(modalState === "uploading" || modalState === "uploaded") &&
                 uploadedFiles.length > 0 && (
@@ -635,10 +966,16 @@ export default function FileUploadModal({
                         : ""
                     }`}
                   >
-                    {uploadedFiles.map((uploadedFile, index) => (
+                    {uploadedFiles.map((uploadedFile) => (
                       <div
                         key={uploadedFile.id}
-                        className="bg-white border border-[#5350ec] rounded-xl p-4 relative flex-shrink-0"
+                        className={`border rounded-xl p-4 relative flex-shrink-0 ${
+                          getFileStatus(uploadedFile.file.name) === "duplicate"
+                            ? "bg-yellow-50 border-yellow-300"
+                            : getFileStatus(uploadedFile.file.name) === "failed"
+                            ? "bg-red-50 border-red-300"
+                            : "bg-white border-[#5350ec]"
+                        }`}
                       >
                         <div className="flex gap-4 items-start">
                           {/* File Icon */}
@@ -674,31 +1011,72 @@ export default function FileUploadModal({
                                   className="absolute h-2 top-0 rounded-[8px] transition-all duration-300"
                                   style={{
                                     left: "0%",
-                                    width:
-                                      modalState === "uploading" &&
-                                      uploadingFileIds.includes(uploadedFile.id)
-                                        ? `${uploadProgress}%`
-                                        : "100%",
+                                    width: `${getFileProgress(uploadedFile.file.name)}%`,
                                     background:
                                       "linear-gradient(120.99deg, #3A0CA3 0%, rgba(67, 97, 238, 0.4) 63.07%)",
                                   }}
                                 />
                               </div>
                               <span className="font-inter font-medium text-[14px] leading-[20px] text-[#414651] text-nowrap whitespace-pre">
-                                {modalState === "uploading" &&
-                                uploadingFileIds.includes(uploadedFile.id)
-                                  ? `${uploadProgress}%`
-                                  : "100%"}
+                                {getFileProgress(uploadedFile.file.name)}%
                               </span>
                             </div>
+
+                            {/* Error/Warning Messages - Inline with each file */}
+                            {(getFileStatus(uploadedFile.file.name) === "duplicate" ||
+                              getFileStatus(uploadedFile.file.name) === "failed" ||
+                              getFileError(uploadedFile.file.name)) && (
+                              <div className="mt-2">
+                                {getFileStatus(uploadedFile.file.name) === "duplicate" && (
+                                  <div className="flex items-center gap-1.5">
+                                    <svg className="w-3 h-3 text-yellow-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                                      <path d="M8.982 1.566a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767L8.982 1.566zM8 5c.535 0 .954.462.9.995l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 5.995A.905.905 0 0 1 8 5zm.002 6a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+                                    </svg>
+                                    <p className="text-xs text-yellow-700">
+                                      {(() => {
+                                        const dupInfo = getFileDuplicateInfo(uploadedFile.file.name);
+                                        return dupInfo?.existingName
+                                          ? `Already uploaded as "${dupInfo.existingName}"`
+                                          : "File already exists in the knowledge base";
+                                      })()}
+                                    </p>
+                                  </div>
+                                )}
+
+                                {getFileStatus(uploadedFile.file.name) === "failed" && (
+                                  <div className="flex items-center gap-1.5">
+                                    <svg className="w-3 h-3 text-red-600 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor">
+                                      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                      <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+                                    </svg>
+                                    <p className="text-xs text-red-700">
+                                      {getFileError(uploadedFile.file.name) || "Upload failed"}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
 
-                          {/* Checkbox - Only show when completed */}
-                          {(modalState === "uploaded" ||
-                            (modalState === "uploading" &&
-                              !uploadingFileIds.includes(uploadedFile.id))) && (
+                          {/* Status Icon - Show based on file status */}
+                          {(modalState !== "uploading" || getFileProgress(uploadedFile.file.name) === 100) && (
                             <div className="absolute top-4 right-4">
-                              <CheckIcon className="w-4 h-4" />
+                              {getFileStatus(uploadedFile.file.name) === "duplicate" ? (
+                                <div className="text-yellow-600" title="Duplicate file detected">
+                                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 1.5A1.5 1.5 0 0 0 6.5 3v1A1.5 1.5 0 0 0 8 5.5h1A1.5 1.5 0 0 0 10.5 4V3A1.5 1.5 0 0 0 9 1.5H8zM8 7a.5.5 0 0 0-.5.5v5a.5.5 0 0 0 1 0v-5A.5.5 0 0 0 8 7z"/>
+                                  </svg>
+                                </div>
+                              ) : getFileStatus(uploadedFile.file.name) === "failed" ? (
+                                <div className="text-red-600" title="Upload failed">
+                                  <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                  </svg>
+                                </div>
+                              ) : (
+                                <CheckIcon className="w-4 h-4" />
+                              )}
                             </div>
                           )}
                         </div>
@@ -717,11 +1095,17 @@ export default function FileUploadModal({
               variant="outline"
               fullWidth
               onClick={
-                modalState === "uploaded" ? handleUploadMore : handleCancel
+                modalState === "uploaded" ? handleUploadMore :
+                modalState === "describing" && currentFileIndex > 0 ? handleBack :
+                modalState === "describing" && currentFileIndex === 0 ? handleCancel :
+                handleCancel
               }
               className="flex-1"
             >
-              {modalState === "uploaded" ? "Upload More" : "Cancel"}
+              {modalState === "uploaded" ? "Upload More" :
+               modalState === "describing" && currentFileIndex > 0 ? "Back" :
+               modalState === "describing" && currentFileIndex === 0 ? "Cancel" :
+               "Cancel"}
             </Button>
             <Button
               variant="gradient"
@@ -730,15 +1114,18 @@ export default function FileUploadModal({
               disabled={
                 modalState === "empty" ||
                 modalState === "uploading" ||
-                (modalState === "describing" && !tempDescription.trim())
+                modalState === "submitting-metadata" ||
+                modalState === "ingesting"
               }
               className="flex-1"
             >
-              {modalState === "describing"
-                ? currentFileIndex < uploadedFiles.length - 1
-                  ? "Next"
-                  : "Submit"
-                : "Next"}
+              {modalState === "uploaded"
+                ? (hasSuccessfulUploads() ? "Next" : "Close")
+                : modalState === "describing"
+                  ? currentFileIndex < uploadedFiles.length - 1
+                    ? "Next"
+                    : "Submit"
+                  : "Next"}
             </Button>
           </div>
         </div>

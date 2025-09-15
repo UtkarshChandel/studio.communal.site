@@ -1,5 +1,9 @@
 import React, { useState, useRef } from "react";
 
+// Figma asset for the upload icon (falls back to local asset if unavailable)
+const FIGMA_UPLOAD_ICON_SRC =
+  "http://localhost:3845/assets/a7ad9fcd000931ae9b6a2ad4b6de67c13dbde8f8.svg";
+
 const SendIcon = ({
   className = "",
   width = 16,
@@ -26,50 +30,27 @@ const SendIcon = ({
 
 const FileUploadIcon = ({
   className = "",
-  width = 16,
-  height = 16,
+  width = 27,
+  height = 27,
+  src = FIGMA_UPLOAD_ICON_SRC,
 }: {
   className?: string;
   width?: number;
   height?: number;
+  src?: string;
 }) => (
-  <svg
+  <img
+    src={src}
+    alt="Attach file"
     className={className}
     width={width}
     height={height}
-    viewBox="0 0 24 24"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M2 11.5V18.5C2 19.6046 2.89543 20.5 4 20.5H20C21.1046 20.5 22 19.6046 22 18.5V11.5"
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M2 11.5V6.5C2 5.39543 2.89543 4.5 4 4.5H9L11 6.5H20C21.1046 6.5 22 7.39543 22 8.5V11.5"
-      stroke="currentColor"
-      strokeWidth="1"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M12 16V10"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M9 13L12 10L15 13"
-      stroke="currentColor"
-      strokeWidth="1.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
+    onError={({ currentTarget }) => {
+      // prevent infinite loop in case fallback also fails
+      currentTarget.onerror = null;
+      currentTarget.src = "/icons/attach.svg";
+    }}
+  />
 );
 
 interface ChatInputTextAreaProps {
@@ -155,14 +136,18 @@ export default function ChatInputTextArea({
                 <button
                   type="button"
                   disabled={disabled || loading}
-                  className={`w-11 h-[41px]
+                  className={`relative w-[41px] h-[41px] rounded-full bg-[#f5f2ff]
                       disabled:opacity-50 disabled:cursor-not-allowed
                       flex items-center justify-center cursor-pointer
                     `}
                   aria-label="Upload file"
                   onClick={onFileUpload}
                 >
-                  <FileUploadIcon className="w-8 h-8 text-violet-800" />
+                  <FileUploadIcon
+                    className="absolute left-2 top-[7px] block"
+                    width={27}
+                    height={27}
+                  />
                 </button>
               )}
 

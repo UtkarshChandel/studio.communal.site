@@ -326,6 +326,7 @@ export default function StudioSessionPage() {
                     userName="Sneha"
                     showMessageActions={true}
                     showEmptyPlaceholder={showEmptyPlaceholder}
+                    sessionId={params?.sessionId}
                     // wire stop button and caret
 
                     generating={
